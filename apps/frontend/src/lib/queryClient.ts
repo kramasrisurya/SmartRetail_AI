@@ -136,7 +136,7 @@ export function QueryClientProvider({
   client?: EnterpriseQueryClient;
   children: React.ReactNode;
 }) {
-  return <QueryContext.Provider value={client}>{children}</QueryContext.Provider>;
+  return React.createElement(QueryContext.Provider, { value: client }, children);
 }
 
 export function useQuery<T>(
