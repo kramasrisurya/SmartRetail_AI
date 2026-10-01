@@ -1,0 +1,36 @@
+# Monorepo tooling configuration (pytest + ruff).
+# Runtime dependencies are declared in apps/backend/requirements.txt and
+# apps/backend/requirements-dev.txt — pip + requirements files is our dependency
+# strategy, kept consistent across the whole project.
+
+[tool.pytest.ini_options]
+testpaths = ["tests/unit", "tests/scenarios", "tests/integration"]
+pythonpath = ["apps/backend"]
+addopts = "-q"
+filterwarnings = [
+    # asyncio/asyncpg emit these when a connection is garbage-collected after
+    # its event loop has already been torn down; they are benign teardown
+    # artifacts on Windows and are not raised from application code.
+    "ignore:coroutine .* was never awaited:RuntimeWarning",
+    "ignore::pytest.PytestUnraisableExceptionWarning",
+    'ignore:.*Using `httpx` with `starlette.testclient` is deprecated.*:DeprecationWarning',
+]
+
+[tool.ruff]
+line-length = 120
+target-version = "py313"
+src = ["apps", "tests", "database"]
+exclude = [".venv", ".git", "build", "dist", "models", "datasets", "infrastructure"]
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "UP", "B", "SIM"]
+
+[tool.ruff.lint.flake8-bugbear]
+# FastAPI's `Depends(...)`/`Query(...)` argument-default pattern is the
+# framework's standard idiom, so B008 (function call in default) is suppressed
+# for exactly these two.
+extend-immutable-calls = ["fastapi.Depends", "fastapi.Query"]
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"

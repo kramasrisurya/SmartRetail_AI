@@ -1,0 +1,40 @@
+# Environment
+.env
+.env.*
+!.env.example
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+build/
+dist/
+
+# Media / large datasets (added locally as needed)
+*.mp4
+*.avi
+*.mkv
+*.mov
+
+# Databases & local logs
+*.db
+*.sqlite
+*.sqlite3
+*.log
+
+# Frontend dependencies
+node_modules/
+apps/frontend/node_modules/
+
+# IDE / OS
+.idea/
+.vscode/
+*.swp
+.DS_Store
+Thumbs.db
+

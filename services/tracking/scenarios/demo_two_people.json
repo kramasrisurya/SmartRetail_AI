@@ -1,0 +1,28 @@
+{
+  "fps": 30,
+  "duration_s": 10.0,
+  "resolution": [320, 180],
+  "description": "Two shoppers cross a simulated aisle camera. Person p2 walks behind a shelving column (scripted occlusion between t=4.0 and t=5.5 via an explicit null waypoint) and must re-appear as the SAME track.",
+  "tracker": {"max_age": 60, "min_hits": 1},
+  "persons": [
+    {
+      "id": "p1",
+      "confidence": 0.91,
+      "path": [
+        {"t": 0.0, "bbox": [10, 60, 34, 130]},
+        {"t": 9.0, "bbox": [280, 62, 304, 132]}
+      ]
+    },
+    {
+      "id": "p2",
+      "confidence": 0.88,
+      "path": [
+        {"t": 0.5, "bbox": [40, 55, 66, 135]},
+        {"t": 4.0, "bbox": [150, 57, 176, 137]},
+        {"t": 4.75, "bbox": null},
+        {"t": 5.5, "bbox": [151, 58, 177, 138]},
+        {"t": 9.5, "bbox": [296, 60, 318, 140]}
+      ]
+    }
+  ]
+}

@@ -1,0 +1,39 @@
+{
+  "fps": 30,
+  "duration_s": 10.0,
+  "resolution": [320, 180],
+  "description": "Spec 101 early beats, one aisle camera: shopper p1 approaches Shelf A (left), picks Product A123 at ~t=2.5, carries it across the aisle, and returns it onto Shelf B (right) at ~t=8 - 'changed my mind', a normal resolvable outcome.",
+  "shelves": {
+    "Shelf A": [0, 40, 60, 150],
+    "Shelf B": [250, 40, 320, 150]
+  },
+  "persons": [
+    {
+      "id": "p1",
+      "confidence": 0.94,
+      "path": [
+        {"t": 0.0, "bbox": [20, 50, 50, 130]},
+        {"t": 2.5, "bbox": [40, 52, 70, 132]},
+        {"t": 5.0, "bbox": [140, 53, 170, 133]},
+        {"t": 7.5, "bbox": [225, 54, 255, 134]},
+        {"t": 9.3, "bbox": [290, 55, 318, 135]},
+        {"t": 9.6, "bbox": null}
+      ]
+    }
+  ],
+  "products": [
+    {
+      "sku": "A123",
+      "confidence": 0.91,
+      "path": [
+        {"t": 0.0, "bbox": [30, 80, 46, 100]},
+        {"t": 2.4, "bbox": [30, 80, 46, 100]},
+        {"t": 3.2, "bbox": [62, 96, 78, 116]},
+        {"t": 5.0, "bbox": [147, 97, 163, 117]},
+        {"t": 7.5, "bbox": [232, 98, 248, 118]},
+        {"t": 8.6, "bbox": [268, 82, 284, 102]},
+        {"t": 10.0, "bbox": [268, 82, 284, 102]}
+      ]
+    }
+  ]
+}

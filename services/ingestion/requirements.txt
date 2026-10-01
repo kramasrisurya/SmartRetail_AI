@@ -1,0 +1,13 @@
+# services/ingestion runtime dependencies. PyAV bundles FFmpeg (decoding) and
+# ships wheel binaries for Windows/linux/macOS; opencv-python-headless is used
+# solely for the resolution-adaptation resize; httpx talks to the Phase 3 API.
+av>=13.0
+numpy>=1.26
+opencv-python-headless>=4.9
+httpx>=0.27
+redis>=5.0  # optional: RedisFramePublisher transport for a separate Phase 5 process
+
+# Optional: hardware ONVIF discovery (spec §5). Not installed by default; the
+# stub degrades gracefully when absent.
+# wsdiscovery>=1.0
+# onvif-zeep>=0.2.12

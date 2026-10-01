@@ -1,0 +1,5 @@
+# Alembic version scripts are stored here (one file per migration revision).
+# Generate a new revision with:
+#   python -m alembic -c apps/backend/alembic.ini revision --autogenerate -m "describe change"
+# Apply with:
+#   make migrate   (or scripts/migrate.sh / scripts/migrate.ps1)

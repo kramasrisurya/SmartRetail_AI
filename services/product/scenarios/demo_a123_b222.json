@@ -1,0 +1,28 @@
+{
+  "fps": 30,
+  "duration_s": 12.0,
+  "description": "Spec section 101 demo fixtures: Product A123 is picked from Shelf A and later returned to Shelf B; Product B222 is picked and temporarily concealed (scripted absence) while carried toward checkout.",
+  "products": [
+    {
+      "sku": "A123",
+      "confidence": 0.91,
+      "path": [
+        {"t": 1.0, "bbox": [40, 60, 64, 100]},
+        {"t": 4.0, "bbox": [120, 62, 144, 102]},
+        {"t": 7.5, "bbox": [200, 64, 220, 104]},
+        {"t": 10.5, "bbox": [240, 58, 260, 98]}
+      ]
+    },
+    {
+      "sku": "B222",
+      "confidence": 0.88,
+      "path": [
+        {"t": 2.0, "bbox": [70, 55, 90, 95]},
+        {"t": 4.5, "bbox": [150, 57, 170, 97]},
+        {"t": 5.25, "bbox": null},
+        {"t": 6.75, "bbox": [151, 58, 171, 98]},
+        {"t": 11.0, "bbox": [280, 60, 300, 100]}
+      ]
+    }
+  ]
+}
