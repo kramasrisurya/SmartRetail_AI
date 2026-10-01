@@ -1,12 +1,9 @@
-import React, { useState, useEffect } from "react";
-import {
-  Play,
-  Pause,
-  RotateCcw,
-} from "lucide-react";
-import { TimelineItem } from "../../types";
-import { api } from "../../lib/api";
-import { cn } from "../../lib/utils";
+import React, { useState, useEffect, useMemo } from "react";
+import { Play, Pause, RotateCcw, Footprints, ShieldAlert, Clock, Video } from "lucide-react";
+import { useTimelineQuery } from "../../hooks/useDashboardQueries";
+import { cn, formatTimeAgo } from "../../lib/utils";
+import { EmptyState } from "../common/EmptyState";
+import { Skeleton } from "../common/Skeleton";
 
 const SAMPLE_JOURNEYS = [
   {
@@ -37,38 +34,20 @@ const SAMPLE_JOURNEYS = [
 
 export function JourneysView() {
   const [selectedKey, setSelectedKey] = useState(SAMPLE_JOURNEYS[0].key);
-  const [timeline, setTimeline] = useState<TimelineItem[]>([]);
-  const [loading, setLoading] = useState(false);
   const [scrubberIndex, setScrubberIndex] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
 
+  const { data: timeline = [], isLoading } = useTimelineQuery(selectedKey);
+
   useEffect(() => {
-    let isMounted = true;
-    async function fetchTimeline() {
-      setLoading(true);
-      try {
-        const data = await api.getTimeline(selectedKey);
-        if (isMounted) {
-          setTimeline(data);
-          setScrubberIndex(0);
-          setIsPlaying(false);
-        }
-      } catch (err) {
-        console.error("Failed to load timeline", err);
-      } finally {
-        if (isMounted) setLoading(false);
-      }
-    }
-    fetchTimeline();
-    return () => {
-      isMounted = false;
-    };
+    setScrubberIndex(0);
+    setIsPlaying(false);
   }, [selectedKey]);
 
   useEffect(() => {
-    let timer: any;
+    let timer: number | undefined;
     if (isPlaying && timeline.length > 0) {
-      timer = setInterval(() => {
+      timer = window.setInterval(() => {
         setScrubberIndex((prev) => {
           if (prev >= timeline.length - 1) {
             setIsPlaying(false);
@@ -78,130 +57,163 @@ export function JourneysView() {
         });
       }, 1500);
     }
-    return () => clearInterval(timer);
+    return () => {
+      if (timer) clearInterval(timer);
+    };
   }, [isPlaying, timeline.length]);
 
-  const activeStep = timeline[scrubberIndex] || timeline[0];
+  const activeStep = useMemo(() => {
+    return timeline[scrubberIndex] || timeline[0];
+  }, [timeline, scrubberIndex]);
 
   return (
-    <div className="max-w-6xl mx-auto space-y-6">
+    <div className="max-w-6xl mx-auto space-y-6 animate-in fade-in duration-150">
       {/* Header & Journey Selector */}
       <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border pb-3">
         <div>
-          <h1 className="text-base font-semibold text-foreground tracking-tight">Customer journeys</h1>
+          <h1 className="text-base font-semibold text-foreground tracking-tight">Customer Journeys</h1>
           <p className="text-xs text-muted-foreground">
-            Multi-camera tracking and sequence reconstruction
+            Multi-camera spatial path tracking & temporal reconstruction
           </p>
         </div>
 
         <div className="flex items-center gap-2 text-xs">
-          <span className="text-muted-foreground">Subject:</span>
+          <label htmlFor="subject-select" className="text-muted-foreground">Subject Journey:</label>
           <select
+            id="subject-select"
             value={selectedKey}
             onChange={(e) => setSelectedKey(e.target.value)}
-            className="px-2.5 py-1 rounded-[4px] border border-border bg-background text-foreground text-xs focus:outline-none"
+            className="px-2.5 py-1.5 rounded-[4px] border border-border bg-background text-foreground text-xs focus:outline-none focus:border-foreground"
           >
             {SAMPLE_JOURNEYS.map((j) => (
               <option key={j.key} value={j.key}>
-                {j.title} ({j.risk})
+                {j.title} · {j.risk}
               </option>
             ))}
           </select>
         </div>
       </div>
 
-      {/* Main Scrubber and Trajectory Player */}
-      <div className="border border-border rounded-[6px] bg-background p-4 space-y-5">
-        {/* Playback bar & Timecode */}
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => setIsPlaying(!isPlaying)}
-              className="p-1.5 rounded-[4px] border border-border hover:bg-muted text-foreground transition text-xs flex items-center gap-1.5"
-            >
-              {isPlaying ? <Pause className="w-3.5 h-3.5" /> : <Play className="w-3.5 h-3.5" />}
-              <span>{isPlaying ? "Pause" : "Play sequence"}</span>
-            </button>
-            <button
-              onClick={() => {
-                setScrubberIndex(0);
-                setIsPlaying(false);
-              }}
-              className="p-1.5 rounded-[4px] border border-border hover:bg-muted text-muted-foreground hover:text-foreground transition"
-              title="Reset"
-            >
-              <RotateCcw className="w-3.5 h-3.5" />
-            </button>
-          </div>
-
-          <div className="text-xs text-muted-foreground font-mono tabular-nums">
-            Step {scrubberIndex + 1} of {Math.max(1, timeline.length)}
+      {isLoading ? (
+        <div className="p-6 space-y-4">
+          <Skeleton className="h-24 w-full rounded-lg" />
+          <div className="space-y-3">
+            {Array.from({ length: 4 }).map((_, i) => (
+              <Skeleton key={i} className="h-16 w-full rounded-lg" />
+            ))}
           </div>
         </div>
+      ) : timeline.length === 0 ? (
+        <EmptyState
+          icon={Footprints}
+          title="No Sequence Records Found"
+          description="There are currently no recorded multi-camera steps for the selected subject key."
+        />
+      ) : (
+        <div className="space-y-6">
+          {/* Playback Controls & Timeline Scrubber Bar */}
+          <div className="p-4 rounded-lg border border-border bg-card shadow-sm space-y-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <button
+                  type="button"
+                  onClick={() => setIsPlaying(!isPlaying)}
+                  aria-label={isPlaying ? "Pause timeline playback" : "Play timeline playback"}
+                  className="p-2 rounded-md bg-primary text-primary-foreground hover:bg-primary/90 transition shadow-sm"
+                >
+                  {isPlaying ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setScrubberIndex(0)}
+                  aria-label="Restart timeline to beginning"
+                  className="p-2 rounded-md border border-border hover:bg-muted text-foreground transition"
+                >
+                  <RotateCcw className="w-4 h-4" />
+                </button>
 
-        {/* Horizontal Timeline Scrubber */}
-        <div className="relative py-4">
-          <div className="absolute top-1/2 left-0 right-0 h-0.5 bg-border -translate-y-1/2" />
-          <div className="relative flex justify-between items-center">
+                <div className="text-xs">
+                  <span className="font-semibold text-foreground">
+                    Step {scrubberIndex + 1} of {timeline.length}:
+                  </span>{" "}
+                  <span className="text-muted-foreground">{activeStep?.label}</span>
+                </div>
+              </div>
+
+              <span className="text-xs font-mono text-muted-foreground tabular-nums">
+                {activeStep?.ts ? formatTimeAgo(activeStep.ts) : "Recorded Step"}
+              </span>
+            </div>
+
+            {/* Scrubber slider */}
+            <input
+              type="range"
+              min="0"
+              max={Math.max(0, timeline.length - 1)}
+              value={scrubberIndex}
+              onChange={(e) => {
+                setScrubberIndex(Number(e.target.value));
+                setIsPlaying(false);
+              }}
+              aria-label="Timeline scrubber position"
+              className="w-full h-1.5 bg-muted rounded-lg appearance-none cursor-pointer accent-primary"
+            />
+          </div>
+
+          {/* Sequential Step Timeline */}
+          <div className="relative border-l-2 border-border ml-4 pl-6 space-y-6">
             {timeline.map((step, idx) => {
               const isActive = idx === scrubberIndex;
               const isPast = idx < scrubberIndex;
+
               return (
-                <button
+                <div
                   key={idx}
                   onClick={() => {
                     setScrubberIndex(idx);
                     setIsPlaying(false);
                   }}
-                  className="group flex flex-col items-center focus:outline-none"
+                  className={cn(
+                    "relative p-4 rounded-lg border transition-all cursor-pointer",
+                    isActive
+                      ? "border-primary bg-primary/5 shadow-sm ring-1 ring-primary/30"
+                      : isPast
+                      ? "border-border/60 bg-card/40 opacity-80"
+                      : "border-border bg-card hover:border-border/80"
+                  )}
                 >
-                  <div
-                    className={cn(
-                      "w-3 h-3 rounded-full border transition-all z-10",
-                      isActive
-                        ? "bg-foreground border-foreground scale-125 ring-2 ring-background"
-                        : isPast
-                        ? "bg-muted-foreground/60 border-muted-foreground"
-                        : "bg-background border-border group-hover:border-foreground"
-                    )}
-                  />
+                  {/* Step dot on vertical line */}
                   <span
                     className={cn(
-                      "mt-2 text-[11px] max-w-[90px] text-center truncate transition",
-                      isActive ? "font-semibold text-foreground" : "text-muted-foreground"
+                      "absolute -left-[31px] top-5 w-3.5 h-3.5 rounded-full border-2 border-background transition-colors",
+                      isActive ? "bg-primary" : isPast ? "bg-muted-foreground" : "bg-border"
                     )}
-                  >
-                    {step.label}
-                  </span>
-                </button>
+                    aria-hidden="true"
+                  />
+
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 mb-1">
+                    <div className="font-medium text-xs text-foreground flex items-center gap-2">
+                      <span className="font-mono text-[10px] text-muted-foreground">#{idx + 1}</span>
+                      <span>{step.label}</span>
+                    </div>
+
+                    <div className="flex items-center gap-2 text-[11px] text-muted-foreground font-mono">
+                      {step.camera_id && (
+                        <span className="flex items-center gap-1">
+                          <Video className="w-3 h-3" /> CAM-0{step.camera_id}
+                        </span>
+                      )}
+                      {step.confidence && (
+                        <span>({Math.round(step.confidence * 100)}% conf)</span>
+                      )}
+                    </div>
+                  </div>
+                </div>
               );
             })}
           </div>
         </div>
-
-        {/* Current Step Evidence Preview */}
-        {activeStep && (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-3 border-t border-border text-xs">
-            <div className="aspect-video rounded-[4px] border border-border bg-zinc-950 flex items-center justify-center relative overflow-hidden">
-              <div className="absolute inset-8 border border-sky-400/80 bg-sky-500/5 rounded-sm" />
-              <span className="font-mono text-xs text-zinc-400 z-10">
-                Camera {activeStep.camera_id || 1} · {activeStep.label}
-              </span>
-            </div>
-
-            <div className="p-3 rounded-[4px] border border-border bg-muted/20 space-y-2">
-              <span className="text-[11px] font-medium text-muted-foreground block">Event details</span>
-              <div className="font-medium text-foreground text-sm">{activeStep.label}</div>
-              <div className="text-muted-foreground text-xs leading-relaxed">
-                Sequence node captured on Camera {activeStep.camera_id || 1}. Track position vector verified across handoff boundary.
-              </div>
-              <div className="pt-2 text-[11px] text-muted-foreground font-mono">
-                Relative position: #{activeStep.position}
-              </div>
-            </div>
-          </div>
-        )}
-      </div>
+      )}
     </div>
   );
 }

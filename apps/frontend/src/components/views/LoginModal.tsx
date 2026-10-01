@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { AlertCircle } from "lucide-react";
+import { AlertCircle, Lock, User as UserIcon, Shield } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
 import { analytics } from "../../lib/analytics";
 
@@ -46,8 +46,9 @@ export function LoginModal({ isOpen, onClose, onOpenPrivacy, onOpenTerms }: Logi
       await login(cleanUser, password);
       analytics.trackEvent("Auth", "login_success", cleanUser);
       if (onClose) onClose();
-    } catch (err: any) {
-      setError(err.message || "Invalid credentials.");
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Invalid credentials.";
+      setError(msg);
       analytics.trackEvent("Auth", "login_failed", cleanUser);
     } finally {
       setLoading(false);
@@ -63,8 +64,9 @@ export function LoginModal({ isOpen, onClose, onOpenPrivacy, onOpenTerms }: Logi
       await login(user, "password");
       analytics.trackEvent("Auth", "quick_login_success", user);
       if (onClose) onClose();
-    } catch (err: any) {
-      setError(err.message || "Failed to sign in.");
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Failed to sign in.";
+      setError(msg);
     } finally {
       setLoading(false);
     }
@@ -78,16 +80,36 @@ export function LoginModal({ isOpen, onClose, onOpenPrivacy, onOpenTerms }: Logi
   ];
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-background/80 backdrop-blur-sm animate-in fade-in duration-100">
-      <div className="relative w-full max-w-sm rounded-[6px] border border-border bg-card p-6 shadow-md text-foreground">
+    <div
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="login-title"
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-background/80 backdrop-blur-sm animate-in fade-in duration-100"
+    >
+      <div className="relative w-full max-w-sm rounded-[6px] border border-border bg-card p-6 shadow-xl text-foreground">
         {/* Clean Header */}
         <div className="mb-5 space-y-1">
-          <h2 className="text-base font-semibold tracking-tight text-foreground">Sign in to StoreSight</h2>
-          <p className="text-xs text-muted-foreground">Enter your operator credentials to access camera feeds.</p>
+          <div className="flex items-center gap-2 mb-2">
+            <div className="w-7 h-7 rounded-md bg-primary/10 text-primary flex items-center justify-center border border-primary/20">
+              <Shield className="w-4 h-4" />
+            </div>
+            <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+              SmartRetail AI
+            </span>
+          </div>
+          <h2 id="login-title" className="text-base font-semibold tracking-tight text-foreground">
+            Sign In to Store Operations
+          </h2>
+          <p className="text-xs text-muted-foreground">
+            Enter your operator credentials to access camera feeds and intelligence.
+          </p>
         </div>
 
         {error && (
-          <div className="mb-4 p-2.5 rounded-[4px] bg-red-500/10 border border-red-500/20 text-xs text-red-600 dark:text-red-400 flex items-center gap-2">
+          <div
+            role="alert"
+            className="mb-4 p-2.5 rounded-[4px] bg-red-500/10 border border-red-500/20 text-xs text-red-600 dark:text-red-400 flex items-center gap-2"
+          >
             <AlertCircle className="w-4 h-4 shrink-0" />
             <span>{error}</span>
           </div>
@@ -101,89 +123,89 @@ export function LoginModal({ isOpen, onClose, onOpenPrivacy, onOpenTerms }: Logi
               id="website"
               type="text"
               name="website"
-              tabIndex={-1}
-              autoComplete="off"
               value={honeypot}
               onChange={(e) => setHoneypot(e.target.value)}
+              tabIndex={-1}
+              autoComplete="off"
             />
           </div>
 
           <div className="space-y-1">
-            <label className="block text-xs font-medium text-foreground">
+            <label htmlFor="username" className="block text-xs font-medium text-foreground">
               Username
             </label>
             <input
+              id="username"
               type="text"
-              value={username}
-              onChange={(e) => {
-                setUsername(e.target.value);
-                if (error) setError(null);
-              }}
-              placeholder="e.g. admin, op1"
-              className="w-full px-2.5 py-1.5 rounded-[4px] border border-border bg-background text-foreground text-xs focus:outline-none focus:border-foreground transition"
               required
-              minLength={3}
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              className="w-full px-2.5 py-1.5 rounded-[4px] border border-border bg-background text-foreground text-xs placeholder:text-muted-foreground/60 focus:outline-none focus:border-primary transition"
+              placeholder="e.g. admin, op1, manager"
             />
           </div>
 
           <div className="space-y-1">
-            <label className="block text-xs font-medium text-foreground">
+            <label htmlFor="password-field" className="block text-xs font-medium text-foreground">
               Password
             </label>
             <input
+              id="password-field"
               type="password"
-              value={password}
-              onChange={(e) => {
-                setPassword(e.target.value);
-                if (error) setError(null);
-              }}
-              placeholder="Password"
-              className="w-full px-2.5 py-1.5 rounded-[4px] border border-border bg-background text-foreground text-xs focus:outline-none focus:border-foreground transition"
               required
-              minLength={4}
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              className="w-full px-2.5 py-1.5 rounded-[4px] border border-border bg-background text-foreground text-xs placeholder:text-muted-foreground/60 focus:outline-none focus:border-primary transition"
+              placeholder="••••••••"
             />
           </div>
 
           <button
             type="submit"
             disabled={loading}
-            className="w-full mt-2 py-1.5 px-3 rounded-[4px] bg-foreground text-background text-xs font-medium hover:opacity-90 transition disabled:opacity-50"
+            className="w-full py-2 px-3 rounded-[4px] bg-primary text-primary-foreground text-xs font-medium hover:bg-primary/90 transition shadow-sm disabled:opacity-50 mt-1"
           >
-            {loading ? "Signing in..." : "Sign in"}
+            {loading ? "Authenticating..." : "Sign In"}
           </button>
         </form>
 
-        {/* Demo Roles Shortcut */}
+        {/* Demo Accounts */}
         <div className="mt-5 pt-4 border-t border-border space-y-2">
-          <span className="text-[11px] font-medium text-muted-foreground block">
-            Demo accounts
-          </span>
+          <div className="text-[11px] font-medium text-muted-foreground">Demo Accounts (One-Click)</div>
           <div className="grid grid-cols-2 gap-1.5">
-            {demoAccounts.map((account) => (
+            {demoAccounts.map((acc) => (
               <button
-                key={account.username}
+                key={acc.username}
                 type="button"
-                onClick={() => handleQuickLogin(account.username)}
-                className="p-1.5 rounded-[4px] border border-border hover:bg-muted text-left transition text-xs"
+                onClick={() => handleQuickLogin(acc.username)}
+                disabled={loading}
+                className="text-left p-1.5 rounded-[4px] border border-border hover:bg-muted text-[11px] transition text-muted-foreground hover:text-foreground disabled:opacity-50"
               >
-                <div className="font-medium text-foreground">{account.label}</div>
-                <div className="text-[10px] text-muted-foreground truncate">{account.desc}</div>
+                <div className="font-semibold text-foreground">{acc.label}</div>
+                <div className="text-[10px] text-muted-foreground truncate">{acc.desc}</div>
               </button>
             ))}
           </div>
         </div>
 
-        {/* Legal links */}
-        <div className="mt-4 pt-3 border-t border-border/60 flex items-center justify-center gap-3 text-[11px] text-muted-foreground">
+        {/* Footer Links */}
+        <div className="mt-4 text-center text-[11px] text-muted-foreground flex items-center justify-center gap-3">
           {onOpenPrivacy && (
-            <button onClick={onOpenPrivacy} className="hover:text-foreground transition">
-              Privacy policy
+            <button
+              type="button"
+              onClick={onOpenPrivacy}
+              className="hover:text-foreground underline transition"
+            >
+              Privacy Policy
             </button>
           )}
-          <span>·</span>
           {onOpenTerms && (
-            <button onClick={onOpenTerms} className="hover:text-foreground transition">
-              Terms of service
+            <button
+              type="button"
+              onClick={onOpenTerms}
+              className="hover:text-foreground underline transition"
+            >
+              Terms of Service
             </button>
           )}
         </div>

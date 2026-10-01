@@ -1,8 +1,21 @@
-import { Alert, Camera, EventItem, HeatmapCell, TimelineItem, Zone } from "../types";
+import {
+  Alert,
+  AlertActionResponse,
+  AlertActionType,
+  AssistantMessage,
+  AssistantResponse,
+  AuditLogEntry,
+  BootstrapData,
+  Camera,
+  EventItem,
+  HeatmapResponse,
+  LoginResponse,
+  TimelineItem,
+} from "../types";
 
 const API_BASE = "/api/v1";
 
-class ApiClient {
+export class ApiClient {
   private getToken(): string {
     return sessionStorage.getItem("storesight_token") || "";
   }
@@ -11,7 +24,7 @@ class ApiClient {
     const token = this.getToken();
     const headers: Record<string, string> = {
       "Content-Type": "application/json",
-      ...(options.headers as Record<string, string> || {}),
+      ...((options.headers as Record<string, string>) || {}),
     };
 
     if (token) {
@@ -24,23 +37,27 @@ class ApiClient {
     });
 
     if (!response.ok) {
-      const errData = await response.json().catch(() => ({}));
-      const message = errData.detail || errData.message || `Request failed with status ${response.status}`;
+      const errData = (await response.json().catch(() => ({}))) as {
+        detail?: string;
+        message?: string;
+      };
+      const message =
+        errData.detail || errData.message || `Request failed with status ${response.status}`;
       throw new Error(message);
     }
 
-    return response.json();
+    return (await response.json()) as T;
   }
 
-  async login(username: string, password: string) {
-    return this.request<{ access_token: string; refresh_token: string; role: string }>("/auth/login", {
+  async login(username: string, password: string): Promise<LoginResponse> {
+    return this.request<LoginResponse>("/auth/login", {
       method: "POST",
       body: JSON.stringify({ username, password }),
     });
   }
 
-  async getBootstrap(): Promise<{ zones: Zone[]; cameras: Camera[] }> {
-    return this.request<{ zones: Zone[]; cameras: Camera[] }>("/dashboard/bootstrap");
+  async getBootstrap(): Promise<BootstrapData> {
+    return this.request<BootstrapData>("/dashboard/bootstrap");
   }
 
   async getAlerts(status?: string): Promise<Alert[]> {
@@ -48,9 +65,16 @@ class ApiClient {
     return this.request<Alert[]>(`/dashboard/alerts${query}`);
   }
 
-  async actOnAlert(alertId: number, action: "claim" | "resolve" | "false_positive" | "escalate", user: string, note?: string) {
-    const query = `action=${action}&user=${encodeURIComponent(user)}&note=${encodeURIComponent(note || "")}`;
-    return this.request(`/dashboard/alerts/${alertId}/action?${query}`, {
+  async actOnAlert(
+    alertId: number,
+    action: AlertActionType,
+    user: string,
+    note?: string
+  ): Promise<AlertActionResponse> {
+    const query = `action=${encodeURIComponent(action)}&user=${encodeURIComponent(
+      user
+    )}&note=${encodeURIComponent(note || "")}`;
+    return this.request<AlertActionResponse>(`/dashboard/alerts/${alertId}/action?${query}`, {
       method: "POST",
     });
   }
@@ -59,8 +83,8 @@ class ApiClient {
     return this.request<TimelineItem[]>(`/journeys/${encodeURIComponent(subjectKey)}/timeline`);
   }
 
-  async getHeatmap(): Promise<{ cells: HeatmapCell[] }> {
-    return this.request<{ cells: HeatmapCell[] }>("/analytics/heatmap");
+  async getHeatmap(): Promise<HeatmapResponse> {
+    return this.request<HeatmapResponse>("/analytics/heatmap");
   }
 
   async getEvents(limit: number = 30): Promise<EventItem[]> {
@@ -69,32 +93,34 @@ class ApiClient {
 
   async askAssistant(
     question: string,
-    history?: { role: string; content: string }[]
-  ): Promise<{
-    answer?: string;
-    declined?: boolean;
-    reason?: string;
-    note?: string;
-    suggestions?: string[];
-    fallback?: boolean;
-    mode?: string;
-    ai_mode?: boolean;
-    ai_notice?: string;
-    refs?: (number | string)[];
-  }> {
-    return this.request("/reports/assistant", {
+    history?: AssistantMessage[]
+  ): Promise<AssistantResponse> {
+    return this.request<AssistantResponse>("/reports/assistant", {
       method: "POST",
       body: JSON.stringify({ question, history: history || [] }),
     });
   }
 
-  async getAuditLog(limit: number = 50): Promise<any[]> {
-    return this.request<any[]>(`/audit-log?limit=${limit}`);
+  async getAuditLog(limit: number = 50): Promise<AuditLogEntry[]> {
+    return this.request<AuditLogEntry[]>(`/audit-log?limit=${limit}`);
   }
 
   async getCameras(): Promise<Camera[]> {
-    const data = await this.request<any[]>("/cameras");
-    return data.map((c: any) => ({
+    interface RawCameraResponse {
+      id: number;
+      name: string;
+      status: "active" | "degraded" | "faulted" | "disabled" | "removed";
+      map_x: number | null;
+      map_y: number | null;
+      facing_direction: number | null;
+      field_of_view: number | null;
+      fps?: number;
+      location?: string | null;
+      zone_id?: number | null;
+    }
+
+    const data = await this.request<RawCameraResponse[]>("/cameras");
+    return data.map((c) => ({
       id: c.id,
       name: c.name,
       status: c.status,

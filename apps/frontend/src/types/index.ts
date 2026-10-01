@@ -31,6 +31,18 @@ export interface RuleSignal {
   justification?: string;
 }
 
+export interface AlertSignals {
+  rules?: RuleSignal[];
+  explanation?: string;
+  zone?: string;
+  camera?: string;
+  product_name?: string;
+  sku?: string;
+  instance_key?: string;
+  action?: string;
+  note?: string;
+}
+
 export interface Alert {
   id: number;
   status: "open" | "reviewing" | "resolved" | "false_positive" | "escalated";
@@ -44,14 +56,7 @@ export interface Alert {
   zone?: string;
   camera?: string;
   score_value?: number;
-  signals?: {
-    rules?: RuleSignal[];
-    explanation?: string;
-    zone?: string;
-    camera?: string;
-    product_name?: string;
-    sku?: string;
-  };
+  signals?: AlertSignals;
 }
 
 export interface EventItem {
@@ -60,7 +65,7 @@ export interface EventItem {
   event_timestamp: string;
   camera_id?: number | null;
   confidence?: number;
-  payload: Record<string, any>;
+  payload: Record<string, unknown>;
 }
 
 export interface TimelineItem {
@@ -69,6 +74,8 @@ export interface TimelineItem {
   label: string;
   camera_id?: number | null;
   confidence?: number;
+  event_type?: string;
+  state?: string;
 }
 
 export interface HeatmapCell {
@@ -84,6 +91,63 @@ export interface UserSession {
   storeId: string;
   storeName: string;
 }
+
+export interface StoreOption {
+  id: string;
+  name: string;
+  address?: string;
+  status?: string;
+}
+
+export interface AuditLogEntry {
+  id: number;
+  timestamp: string;
+  user: string;
+  action: string;
+  target_type: string;
+  target_id: string | number;
+  details?: Record<string, unknown>;
+}
+
+export interface AssistantMessage {
+  role: "user" | "assistant";
+  content: string;
+}
+
+export interface AssistantResponse {
+  answer?: string;
+  declined?: boolean;
+  reason?: string;
+  note?: string;
+  suggestions?: string[];
+  fallback?: boolean;
+  mode?: string;
+  ai_mode?: boolean;
+  ai_notice?: string;
+  refs?: (number | string)[];
+}
+
+export interface BootstrapData {
+  zones: Zone[];
+  cameras: Camera[];
+}
+
+export interface HeatmapResponse {
+  cells: HeatmapCell[];
+}
+
+export interface LoginResponse {
+  access_token: string;
+  refresh_token: string;
+  role: string;
+}
+
+export interface AlertActionResponse {
+  alert_id: number;
+  status: string;
+}
+
+export type AlertActionType = "claim" | "resolve" | "false_positive" | "escalate";
 
 export type ViewTab =
   | "overview"
@@ -101,3 +165,11 @@ export type ViewTab =
   | "privacy"
   | "terms"
   | "not_found";
+
+export interface ToastNotification {
+  id: string;
+  text: string;
+  type: "success" | "error" | "info" | "warning";
+  timestamp: number;
+  duration?: number;
+}

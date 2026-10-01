@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
   Search,
   Bell,
@@ -22,21 +22,35 @@ interface HeaderProps {
 export function Header({
   onOpenCommand,
   unreadCount = 0,
+  onOpenNotifications,
   onToggleMobileMenu,
 }: HeaderProps) {
   const { session, logout, theme, toggleTheme, activeStore, stores, setActiveStore } = useAuth();
   const [storeDropdownOpen, setStoreDropdownOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
 
+  // Close menus on Escape
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        setStoreDropdownOpen(false);
+        setUserMenuOpen(false);
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, []);
+
   return (
-    <header className="h-12 border-b border-border bg-background px-4 flex items-center justify-between gap-3 sticky top-0 z-20">
+    <header className="h-12 border-b border-border bg-background px-4 flex items-center justify-between gap-3 sticky top-0 z-20 shadow-xs">
       {/* Left: Mobile trigger & Store selector */}
       <div className="flex items-center gap-2">
         {onToggleMobileMenu && (
           <button
+            type="button"
             onClick={onToggleMobileMenu}
-            className="md:hidden p-1.5 rounded text-muted-foreground hover:text-foreground hover:bg-muted transition"
-            aria-label="Toggle navigation"
+            className="md:hidden p-1.5 rounded text-muted-foreground hover:text-foreground hover:bg-muted transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+            aria-label="Toggle navigation menu"
           >
             <Menu className="w-4 h-4" />
           </button>
@@ -44,23 +58,31 @@ export function Header({
 
         <div className="relative">
           <button
+            type="button"
             onClick={() => setStoreDropdownOpen(!storeDropdownOpen)}
-            className="flex items-center gap-1.5 px-2.5 py-1 rounded-[6px] border border-border hover:bg-muted text-xs font-medium text-foreground transition"
+            aria-haspopup="true"
+            aria-expanded={storeDropdownOpen}
+            className="flex items-center gap-1.5 px-2.5 py-1 rounded-[6px] border border-border hover:bg-muted text-xs font-medium text-foreground transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
           >
-            <span className="truncate max-w-[160px] sm:max-w-none">{activeStore.name}</span>
+            <span className="truncate max-w-[140px] sm:max-w-none">{activeStore.name}</span>
             <ChevronDown className="w-3 h-3 text-muted-foreground" />
           </button>
 
           {storeDropdownOpen && (
             <>
-              <div className="fixed inset-0 z-40" onClick={() => setStoreDropdownOpen(false)} />
-              <div className="absolute left-0 mt-1 w-60 rounded-[6px] border border-border bg-popover p-1 shadow-lg z-50 animate-in fade-in duration-100">
+              <div
+                className="fixed inset-0 z-40"
+                onClick={() => setStoreDropdownOpen(false)}
+                aria-hidden="true"
+              />
+              <div className="absolute left-0 mt-1 w-64 rounded-[6px] border border-border bg-popover p-1 shadow-lg z-50 animate-in fade-in duration-100">
                 <div className="px-2 py-1 text-[11px] font-medium text-muted-foreground">
-                  Select location
+                  Select Store Location
                 </div>
                 {stores.map((s) => (
                   <button
                     key={s.id}
+                    type="button"
                     onClick={() => {
                       setActiveStore(s);
                       setStoreDropdownOpen(false);
@@ -74,7 +96,7 @@ export function Header({
                   >
                     <span>{s.name}</span>
                     {s.id === activeStore.id && (
-                      <span className="w-1.5 h-1.5 rounded-full bg-foreground" />
+                      <span className="w-1.5 h-1.5 rounded-full bg-primary" />
                     )}
                   </button>
                 ))}
@@ -87,12 +109,14 @@ export function Header({
       {/* Center: Search trigger */}
       <div className="flex-1 max-w-sm mx-auto hidden md:block">
         <button
+          type="button"
           onClick={onOpenCommand}
-          className="w-full flex items-center justify-between px-2.5 py-1 rounded-[6px] border border-border bg-background hover:bg-muted/50 text-muted-foreground text-xs transition"
+          aria-label="Open command palette"
+          className="w-full flex items-center justify-between px-2.5 py-1 rounded-[6px] border border-border bg-background hover:bg-muted/50 text-muted-foreground text-xs transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
         >
           <div className="flex items-center gap-2">
             <Search className="w-3.5 h-3.5 text-muted-foreground" />
-            <span className="text-muted-foreground">Search...</span>
+            <span className="text-muted-foreground">Search commands & entities...</span>
           </div>
           <kbd className="px-1.5 py-0.5 text-[10px] font-mono rounded border border-border bg-muted/50 text-muted-foreground">
             ⌘K
@@ -100,81 +124,80 @@ export function Header({
         </button>
       </div>
 
-      {/* Right Actions: Theme, Notifications, User */}
-      <div className="flex items-center gap-1">
+      {/* Right: Theme, Notifications, User Menu */}
+      <div className="flex items-center gap-1.5">
         <button
+          type="button"
           onClick={toggleTheme}
-          className="p-1.5 rounded-[6px] text-muted-foreground hover:text-foreground hover:bg-muted transition"
-          title={`Switch to ${theme === "dark" ? "light" : "dark"} mode`}
-          aria-label="Toggle theme"
+          aria-label={`Switch to ${theme === "dark" ? "light" : "dark"} mode`}
+          className="p-1.5 rounded text-muted-foreground hover:text-foreground hover:bg-muted transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
         >
           {theme === "dark" ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
         </button>
 
-        <button
-          onClick={onOpenCommand}
-          className="relative p-1.5 rounded-[6px] text-muted-foreground hover:text-foreground hover:bg-muted transition"
-          title="Alerts and notifications"
-          aria-label="Notifications"
-        >
-          <Bell className="w-4 h-4" />
-          {unreadCount > 0 && (
-            <span className="absolute top-1 right-1 min-w-[14px] h-[14px] px-1 rounded-full bg-red-600 text-white text-[9px] font-mono font-medium flex items-center justify-center leading-none">
-              {unreadCount}
-            </span>
-          )}
-        </button>
-
-        <div className="h-4 w-px bg-border mx-1" />
-
-        {/* User profile / session */}
-        {session ? (
-          <div className="relative">
-            <button
-              onClick={() => setUserMenuOpen(!userMenuOpen)}
-              className="flex items-center gap-2 p-1 rounded-[6px] hover:bg-muted transition text-xs"
-            >
-              <div className="w-6 h-6 rounded-full bg-muted border border-border flex items-center justify-center text-[11px] font-medium text-foreground">
-                {session.user.charAt(0).toUpperCase()}
-              </div>
-              <span className="font-medium text-foreground hidden sm:inline">{session.user}</span>
-              <ChevronDown className="w-3 h-3 text-muted-foreground hidden sm:inline" />
-            </button>
-
-            {userMenuOpen && (
-              <>
-                <div className="fixed inset-0 z-40" onClick={() => setUserMenuOpen(false)} />
-                <div className="absolute right-0 mt-1 w-48 rounded-[6px] border border-border bg-popover p-1 shadow-lg z-50 animate-in fade-in duration-100">
-                  <div className="px-2.5 py-1.5 border-b border-border text-xs">
-                    <p className="font-medium text-foreground">{session.user}</p>
-                    <p className="text-[11px] text-muted-foreground capitalize">{session.role.replace("_", " ")}</p>
-                  </div>
-                  <div className="pt-1">
-                    <button
-                      onClick={() => {
-                        logout();
-                        setUserMenuOpen(false);
-                      }}
-                      className="w-full flex items-center gap-2 px-2.5 py-1.5 text-xs text-destructive hover:bg-destructive/10 rounded-[4px] transition text-left"
-                    >
-                      <LogOut className="w-3.5 h-3.5" />
-                      <span>Sign out</span>
-                    </button>
-                  </div>
-                </div>
-              </>
-            )}
-          </div>
-        ) : (
+        {onOpenNotifications && (
           <button
-            onClick={onOpenCommand}
-            className="flex items-center gap-1 px-2.5 py-1 rounded-[6px] bg-foreground text-background text-xs font-medium hover:opacity-90 transition"
+            type="button"
+            onClick={onOpenNotifications}
+            aria-label={`Notifications (${unreadCount} unread)`}
+            className="p-1.5 rounded text-muted-foreground hover:text-foreground hover:bg-muted transition relative focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
           >
-            <UserIcon className="w-3.5 h-3.5" />
-            <span>Sign in</span>
+            <Bell className="w-4 h-4" />
+            {unreadCount > 0 && (
+              <span className="absolute top-1 right-1 w-2 h-2 rounded-full bg-red-500" />
+            )}
           </button>
         )}
+
+        {/* User profile dropdown */}
+        <div className="relative">
+          <button
+            type="button"
+            onClick={() => setUserMenuOpen(!userMenuOpen)}
+            aria-haspopup="true"
+            aria-expanded={userMenuOpen}
+            className="flex items-center gap-1.5 p-1 rounded hover:bg-muted text-xs transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+          >
+            <div className="w-6 h-6 rounded-full bg-primary/10 text-primary border border-primary/20 flex items-center justify-center font-semibold text-[11px]">
+              {session?.user?.[0]?.toUpperCase() || "A"}
+            </div>
+            <span className="font-medium text-foreground hidden sm:inline">{session?.user || "Operator"}</span>
+            <ChevronDown className="w-3 h-3 text-muted-foreground hidden sm:inline" />
+          </button>
+
+          {userMenuOpen && (
+            <>
+              <div
+                className="fixed inset-0 z-40"
+                onClick={() => setUserMenuOpen(false)}
+                aria-hidden="true"
+              />
+              <div className="absolute right-0 mt-1 w-52 rounded-[6px] border border-border bg-popover p-1 shadow-lg z-50 animate-in fade-in duration-100">
+                <div className="px-2.5 py-2 border-b border-border/50 text-xs">
+                  <div className="font-semibold text-foreground">{session?.user}</div>
+                  <div className="text-[11px] text-muted-foreground capitalize">{session?.role?.replace("_", " ")}</div>
+                </div>
+
+                <div className="p-1">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setUserMenuOpen(false);
+                      logout();
+                    }}
+                    className="w-full text-left px-2 py-1.5 rounded-[4px] text-xs text-red-600 dark:text-red-400 hover:bg-destructive/10 flex items-center gap-2 transition"
+                  >
+                    <LogOut className="w-3.5 h-3.5" />
+                    <span>Sign Out</span>
+                  </button>
+                </div>
+              </div>
+            </>
+          )}
+        </div>
       </div>
     </header>
   );
 }
+
+export default Header;

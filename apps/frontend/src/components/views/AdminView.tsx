@@ -1,7 +1,9 @@
-import React, { useState, useEffect } from "react";
-import { Camera, Zone } from "../../types";
+import React, { useState, useEffect, useMemo } from "react";
+import { Camera, Zone, AuditLogEntry } from "../../types";
 import { api } from "../../lib/api";
 import { cn, formatTimeAgo, getStatusDot } from "../../lib/utils";
+import { EmptyState } from "../common/EmptyState";
+import { Shield, Users, Video, FileText } from "lucide-react";
 
 interface AdminViewProps {
   cameras: Camera[];
@@ -18,44 +20,51 @@ const DEMO_USERS = [
 
 export function AdminView({ cameras, zones, activeSubTab = "cameras" }: AdminViewProps) {
   const [subTab, setSubTab] = useState<"cameras" | "users" | "settings">(activeSubTab);
-  const [auditLogs, setAuditLogs] = useState<any[]>([]);
+  const [auditLogs, setAuditLogs] = useState<AuditLogEntry[]>([]);
+  const [loadingAudit, setLoadingAudit] = useState(false);
 
   useEffect(() => {
     async function loadAudit() {
+      setLoadingAudit(true);
       try {
         const logs = await api.getAuditLog(25);
         setAuditLogs(logs);
       } catch {
         setAuditLogs([
-          { ts: Date.now() / 1000 - 120, actor: "admin", action: "auth.login", entity_type: "user", entity_id: "admin" },
-          { ts: Date.now() / 1000 - 340, actor: "op1", action: "alert.resolve", entity_type: "alert", entity_id: "1" },
-          { ts: Date.now() / 1000 - 850, actor: "system", action: "camera.health_check", entity_type: "camera", entity_id: "CAM-06" },
+          { id: 1, timestamp: new Date(Date.now() - 120000).toISOString(), user: "admin", action: "auth.login", target_type: "user", target_id: "admin" },
+          { id: 2, timestamp: new Date(Date.now() - 340000).toISOString(), user: "op1", action: "alert.resolve", target_type: "alert", target_id: "1" },
+          { id: 3, timestamp: new Date(Date.now() - 850000).toISOString(), user: "system", action: "camera.health_check", target_type: "camera", target_id: "CAM-06" },
         ]);
+      } finally {
+        setLoadingAudit(false);
       }
     }
     loadAudit();
   }, []);
 
   return (
-    <div className="max-w-6xl mx-auto space-y-6">
+    <div className="max-w-6xl mx-auto space-y-6 animate-in fade-in duration-150">
       {/* Header & Sub-Tabs */}
       <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border pb-3">
         <div>
-          <h1 className="text-base font-semibold text-foreground tracking-tight">Administration</h1>
-          <p className="text-xs text-muted-foreground">Camera nodes, user access, and system logs</p>
+          <h1 className="text-base font-semibold text-foreground tracking-tight">Administration & System Control</h1>
+          <p className="text-xs text-muted-foreground">Camera telemetry nodes, RBAC permissions, and auditable trails</p>
         </div>
 
-        <div className="flex items-center rounded-[4px] border border-border bg-background p-0.5 text-xs">
+        <div className="flex items-center rounded-[4px] border border-border bg-background p-0.5 text-xs" role="tablist" aria-label="Admin categories">
           {(["cameras", "users", "settings"] as const).map((tab) => (
             <button
               key={tab}
+              type="button"
+              role="tab"
+              aria-selected={subTab === tab}
               onClick={() => setSubTab(tab)}
               className={cn(
-                "px-2.5 py-0.5 rounded-[3px] capitalize transition",
+                "px-2.5 py-0.5 rounded-[3px] capitalize transition focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary",
                 subTab === tab ? "bg-muted font-medium text-foreground" : "text-muted-foreground hover:text-foreground"
               )}
             >
-              {tab === "cameras" ? "Cameras" : tab === "users" ? "Users & access" : "Audit log"}
+              {tab === "cameras" ? "Cameras" : tab === "users" ? "Users & Access" : "Audit Log"}
             </button>
           ))}
         </div>
@@ -65,22 +74,25 @@ export function AdminView({ cameras, zones, activeSubTab = "cameras" }: AdminVie
       {subTab === "cameras" && (
         <div className="space-y-3">
           <div className="flex items-center justify-between text-xs text-muted-foreground">
-            <span>{cameras.length} cameras configured</span>
-            <button className="px-2.5 py-1 rounded-[4px] bg-foreground text-background font-medium hover:opacity-90 transition">
-              Add camera
+            <span>{cameras.length} camera stream governors registered</span>
+            <button
+              type="button"
+              className="px-2.5 py-1 rounded-[4px] bg-primary text-primary-foreground font-medium hover:bg-primary/90 transition shadow-sm"
+            >
+              Register Camera
             </button>
           </div>
 
-          <div className="border border-border rounded-[6px] overflow-hidden bg-background">
-            <table className="w-full text-left text-xs">
+          <div className="border border-border rounded-[6px] overflow-hidden bg-background shadow-sm">
+            <table className="w-full text-left text-xs" aria-label="Registered cameras table">
               <thead className="bg-muted/50 border-b border-border text-muted-foreground font-medium">
                 <tr className="h-8">
-                  <th className="px-3 py-1 font-medium w-28">Status</th>
-                  <th className="px-3 py-1 font-medium">Camera name</th>
-                  <th className="px-3 py-1 font-medium">Zone</th>
-                  <th className="px-3 py-1 font-medium w-24">FPS</th>
-                  <th className="px-3 py-1 font-medium w-24">Latency</th>
-                  <th className="px-3 py-1 font-medium w-28 text-right">Heartbeat</th>
+                  <th scope="col" className="px-3 py-1 font-medium w-28">Status</th>
+                  <th scope="col" className="px-3 py-1 font-medium">Camera Name</th>
+                  <th scope="col" className="px-3 py-1 font-medium">Zone Location</th>
+                  <th scope="col" className="px-3 py-1 font-medium w-24 text-right">Target FPS</th>
+                  <th scope="col" className="px-3 py-1 font-medium w-24 text-right">Latency</th>
+                  <th scope="col" className="px-3 py-1 font-medium w-28 text-right">Heartbeat</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-border">
@@ -90,16 +102,16 @@ export function AdminView({ cameras, zones, activeSubTab = "cameras" }: AdminVie
                     <tr key={c.id} className="h-9 hover:bg-muted/40 transition-colors">
                       <td className="px-3 py-1.5 whitespace-nowrap">
                         <span className="inline-flex items-center gap-1.5 text-xs text-foreground">
-                          <span className={cn("w-1.5 h-1.5 rounded-full shrink-0", status.dotClass)} />
+                          <span className={cn("w-1.5 h-1.5 rounded-full shrink-0", status.dotClass)} aria-hidden="true" />
                           <span>{status.label}</span>
                         </span>
                       </td>
                       <td className="px-3 py-1.5 font-medium text-foreground">{c.name}</td>
                       <td className="px-3 py-1.5 text-muted-foreground">{c.location || "Sales Floor"}</td>
-                      <td className="px-3 py-1.5 font-mono text-muted-foreground tabular-nums">{c.fps || 24}</td>
-                      <td className="px-3 py-1.5 font-mono text-muted-foreground tabular-nums">{c.latency_ms || 32}ms</td>
-                      <td className="px-3 py-1.5 font-mono text-muted-foreground tabular-nums text-right whitespace-nowrap">
-                        {formatTimeAgo(c.last_heartbeat_at)}
+                      <td className="px-3 py-1.5 font-mono text-muted-foreground tabular-nums text-right">{c.fps || 15}</td>
+                      <td className="px-3 py-1.5 font-mono text-muted-foreground tabular-nums text-right">{c.latency_ms || 28}ms</td>
+                      <td className="px-3 py-1.5 font-mono text-muted-foreground text-right">
+                        {c.last_heartbeat_at ? formatTimeAgo(c.last_heartbeat_at) : "Active"}
                       </td>
                     </tr>
                   );
@@ -110,24 +122,27 @@ export function AdminView({ cameras, zones, activeSubTab = "cameras" }: AdminVie
         </div>
       )}
 
-      {/* Subtab 2: Users Table */}
+      {/* Subtab 2: Users & Access */}
       {subTab === "users" && (
         <div className="space-y-3">
           <div className="flex items-center justify-between text-xs text-muted-foreground">
-            <span>{DEMO_USERS.length} user accounts</span>
-            <button className="px-2.5 py-1 rounded-[4px] bg-foreground text-background font-medium hover:opacity-90 transition">
-              Invite user
+            <span>Enterprise RBAC Accounts</span>
+            <button
+              type="button"
+              className="px-2.5 py-1 rounded-[4px] bg-primary text-primary-foreground font-medium hover:bg-primary/90 transition shadow-sm"
+            >
+              Add User
             </button>
           </div>
 
-          <div className="border border-border rounded-[6px] overflow-hidden bg-background">
-            <table className="w-full text-left text-xs">
+          <div className="border border-border rounded-[6px] overflow-hidden bg-background shadow-sm">
+            <table className="w-full text-left text-xs" aria-label="RBAC user accounts table">
               <thead className="bg-muted/50 border-b border-border text-muted-foreground font-medium">
                 <tr className="h-8">
-                  <th className="px-3 py-1 font-medium">Username</th>
-                  <th className="px-3 py-1 font-medium">Email</th>
-                  <th className="px-3 py-1 font-medium">Role</th>
-                  <th className="px-3 py-1 font-medium w-24 text-right">Status</th>
+                  <th scope="col" className="px-3 py-1 font-medium">Username</th>
+                  <th scope="col" className="px-3 py-1 font-medium">Email</th>
+                  <th scope="col" className="px-3 py-1 font-medium">Role</th>
+                  <th scope="col" className="px-3 py-1 font-medium text-right">Status</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-border">
@@ -135,11 +150,14 @@ export function AdminView({ cameras, zones, activeSubTab = "cameras" }: AdminVie
                   <tr key={u.id} className="h-9 hover:bg-muted/40 transition-colors">
                     <td className="px-3 py-1.5 font-medium text-foreground">{u.username}</td>
                     <td className="px-3 py-1.5 text-muted-foreground font-mono">{u.email}</td>
-                    <td className="px-3 py-1.5 text-foreground">{u.role}</td>
-                    <td className="px-3 py-1.5 text-right whitespace-nowrap">
-                      <span className="inline-flex items-center gap-1.5 text-xs text-muted-foreground">
-                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                        <span>Active</span>
+                    <td className="px-3 py-1.5">
+                      <span className="px-1.5 py-0.5 rounded bg-muted text-[11px] font-medium border border-border">
+                        {u.role}
+                      </span>
+                    </td>
+                    <td className="px-3 py-1.5 text-right">
+                      <span className="inline-flex items-center gap-1 text-emerald-600 dark:text-emerald-400 font-medium">
+                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" /> Active
                       </span>
                     </td>
                   </tr>
@@ -150,39 +168,49 @@ export function AdminView({ cameras, zones, activeSubTab = "cameras" }: AdminVie
         </div>
       )}
 
-      {/* Subtab 3: System Audit Log */}
+      {/* Subtab 3: Audit Log */}
       {subTab === "settings" && (
         <div className="space-y-3">
-          <div className="text-xs text-muted-foreground">
-            Recent operator actions and system events
+          <div className="flex items-center justify-between text-xs text-muted-foreground">
+            <span>Immutable Security Audit Stream</span>
           </div>
 
-          <div className="border border-border rounded-[6px] overflow-hidden bg-background">
-            <table className="w-full text-left text-xs font-mono">
-              <thead className="bg-muted/50 border-b border-border text-muted-foreground font-medium">
-                <tr className="h-8">
-                  <th className="px-3 py-1 font-medium">Action</th>
-                  <th className="px-3 py-1 font-medium">Actor</th>
-                  <th className="px-3 py-1 font-medium">Target</th>
-                  <th className="px-3 py-1 font-medium w-28 text-right">Time</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-border text-xs">
-                {auditLogs.map((log, idx) => (
-                  <tr key={idx} className="h-8 hover:bg-muted/40 transition-colors">
-                    <td className="px-3 py-1 text-foreground">{log.action}</td>
-                    <td className="px-3 py-1 text-muted-foreground">{log.actor}</td>
-                    <td className="px-3 py-1 text-muted-foreground">
-                      {log.entity_type}:{log.entity_id}
-                    </td>
-                    <td className="px-3 py-1 text-muted-foreground text-right whitespace-nowrap">
-                      {formatTimeAgo(new Date(log.ts * 1000).toISOString())}
-                    </td>
+          {auditLogs.length === 0 ? (
+            <EmptyState
+              icon={FileText}
+              title="No Audit Records"
+              description="No operator modifications or administrative actions recorded yet."
+            />
+          ) : (
+            <div className="border border-border rounded-[6px] overflow-hidden bg-background shadow-sm">
+              <table className="w-full text-left text-xs" aria-label="Audit log table">
+                <thead className="bg-muted/50 border-b border-border text-muted-foreground font-medium">
+                  <tr className="h-8">
+                    <th scope="col" className="px-3 py-1 font-medium">Timestamp</th>
+                    <th scope="col" className="px-3 py-1 font-medium">Operator / Actor</th>
+                    <th scope="col" className="px-3 py-1 font-medium">Action Performed</th>
+                    <th scope="col" className="px-3 py-1 font-medium">Target Entity</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody className="divide-y divide-border">
+                  {auditLogs.map((log) => (
+                    <tr key={log.id} className="h-9 hover:bg-muted/40 transition-colors">
+                      <td className="px-3 py-1.5 font-mono text-muted-foreground tabular-nums">
+                        {formatTimeAgo(log.timestamp)}
+                      </td>
+                      <td className="px-3 py-1.5 font-medium text-foreground">{log.user}</td>
+                      <td className="px-3 py-1.5">
+                        <span className="font-mono text-xs text-primary">{log.action}</span>
+                      </td>
+                      <td className="px-3 py-1.5 text-muted-foreground font-mono">
+                        {log.target_type}:{String(log.target_id)}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
         </div>
       )}
     </div>

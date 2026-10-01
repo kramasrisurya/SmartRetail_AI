@@ -1,223 +1,197 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, Suspense, lazy, useCallback, useMemo } from "react";
 import { useAuth } from "./context/AuthContext";
+import { useAppStore, appStore } from "./store/useAppStore";
+import {
+  useBootstrapQuery,
+  useAlertsQuery,
+  useEventsQuery,
+  useHeatmapQuery,
+  useAlertActionMutation,
+} from "./hooks/useDashboardQueries";
 import { Sidebar } from "./components/layout/Sidebar";
 import { Header } from "./components/layout/Header";
 import { CommandPalette } from "./components/layout/CommandPalette";
 import { LoginModal } from "./components/views/LoginModal";
-import { OverviewView } from "./components/views/OverviewView";
-import { CamerasView } from "./components/views/CamerasView";
-import { StoreMapView } from "./components/views/StoreMapView";
-import { AlertsView } from "./components/views/AlertsView";
-import { JourneysView } from "./components/views/JourneysView";
-import { AnalyticsView } from "./components/views/AnalyticsView";
-import { InventoryView } from "./components/views/InventoryView";
-import { AssistantView } from "./components/views/AssistantView";
-import { AdminView } from "./components/views/AdminView";
-import { PrivacyPolicyView } from "./components/views/PrivacyPolicyView";
-import { TermsView } from "./components/views/TermsView";
-import { NotFoundView } from "./components/views/NotFoundView";
 import { CookieConsentBanner } from "./components/common/CookieConsentBanner";
-import { TableSkeleton } from "./components/common/Skeleton";
-import { Alert, Camera, EventItem, HeatmapCell, ViewTab, Zone } from "./types";
-import { api } from "./lib/api";
+import { ToastContainer } from "./components/common/ToastContainer";
+import { ErrorBoundary } from "./components/common/ErrorBoundary";
+import { ViewSkeleton } from "./components/common/Skeleton";
+import { Alert, Camera, ViewTab } from "./types";
 import { analytics } from "./lib/analytics";
+
+// Lazy-loaded Views for optimum code-splitting & reduced initial JS bundle
+const OverviewView = lazy(() =>
+  import("./components/views/OverviewView").then((m) => ({ default: m.OverviewView }))
+);
+const CamerasView = lazy(() =>
+  import("./components/views/CamerasView").then((m) => ({ default: m.CamerasView }))
+);
+const StoreMapView = lazy(() =>
+  import("./components/views/StoreMapView").then((m) => ({ default: m.StoreMapView }))
+);
+const AlertsView = lazy(() =>
+  import("./components/views/AlertsView").then((m) => ({ default: m.AlertsView }))
+);
+const JourneysView = lazy(() =>
+  import("./components/views/JourneysView").then((m) => ({ default: m.JourneysView }))
+);
+const AnalyticsView = lazy(() =>
+  import("./components/views/AnalyticsView").then((m) => ({ default: m.AnalyticsView }))
+);
+const InventoryView = lazy(() =>
+  import("./components/views/InventoryView").then((m) => ({ default: m.InventoryView }))
+);
+const AssistantView = lazy(() =>
+  import("./components/views/AssistantView").then((m) => ({ default: m.AssistantView }))
+);
+const AdminView = lazy(() =>
+  import("./components/views/AdminView").then((m) => ({ default: m.AdminView }))
+);
+const PrivacyPolicyView = lazy(() =>
+  import("./components/views/PrivacyPolicyView").then((m) => ({ default: m.PrivacyPolicyView }))
+);
+const TermsView = lazy(() =>
+  import("./components/views/TermsView").then((m) => ({ default: m.TermsView }))
+);
+const NotFoundView = lazy(() =>
+  import("./components/views/NotFoundView").then((m) => ({ default: m.NotFoundView }))
+);
 
 export function App() {
   const { isAuthenticated, session } = useAuth();
-  const [currentTab, setCurrentTab] = useState<ViewTab>("overview");
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [commandPaletteOpen, setCommandPaletteOpen] = useState(false);
-  const [loginModalOpen, setLoginModalOpen] = useState(false);
-  const [unauthLegalTab, setUnauthLegalTab] = useState<"privacy" | "terms" | null>(null);
 
-  // Core Data State
-  const [cameras, setCameras] = useState<Camera[]>([]);
-  const [zones, setZones] = useState<Zone[]>([]);
-  const [alerts, setAlerts] = useState<Alert[]>([]);
-  const [events, setEvents] = useState<EventItem[]>([]);
-  const [heatmapCells, setHeatmapCells] = useState<HeatmapCell[]>([]);
-  const [loading, setLoading] = useState(true);
+  // Selective store subscriptions to prevent whole-tree re-renders
+  const currentTab = useAppStore((s) => s.currentTab);
+  const mobileMenuOpen = useAppStore((s) => s.mobileMenuOpen);
+  const commandPaletteOpen = useAppStore((s) => s.commandPaletteOpen);
+  const loginModalOpen = useAppStore((s) => s.loginModalOpen);
+  const unauthLegalTab = useAppStore((s) => s.unauthLegalTab);
+  const selectedAlert = useAppStore((s) => s.selectedAlert);
+  const selectedCamera = useAppStore((s) => s.selectedCamera);
 
-  // Selection / Detail Drawer State
-  const [selectedAlert, setSelectedAlert] = useState<Alert | null>(null);
-  const [selectedCamera, setSelectedCamera] = useState<Camera | null>(null);
-  const [toastMessage, setToastMessage] = useState<{ text: string; type: "success" | "info" | "error" } | null>(null);
+  // TanStack React Query Hooks for cached, resilient data fetching
+  const { data: bootstrapData } = useBootstrapQuery();
+  const { data: alerts = [], refetch: refetchAlerts } = useAlertsQuery();
+  const { data: events = [] } = useEventsQuery(50);
+  const { data: heatmapData } = useHeatmapQuery();
+  const alertActionMutation = useAlertActionMutation();
 
-  const showToast = (text: string, type: "success" | "info" | "error" = "info") => {
-    setToastMessage({ text, type });
-    setTimeout(() => setToastMessage(null), 3000);
-  };
+  const cameras = useMemo(() => bootstrapData?.cameras || [], [bootstrapData]);
+  const zones = useMemo(() => bootstrapData?.zones || [], [bootstrapData]);
+  const heatmapCells = useMemo(() => heatmapData?.cells || [], [heatmapData]);
 
+  // Analytics tracking on view change
   useEffect(() => {
     analytics.trackPageView(currentTab);
   }, [currentTab]);
 
-  const loadData = async (isBackground = false) => {
-    try {
-      if (!isBackground) setLoading(true);
+  // Navigation and selection callbacks
+  const handleNavigate = useCallback((tab: ViewTab) => {
+    appStore.setCurrentTab(tab);
+  }, []);
 
-      const boot = await api.getBootstrap().catch(() => ({ zones: [], cameras: [] }));
-      if (boot.cameras?.length) setCameras(boot.cameras);
-      if (boot.zones?.length) setZones(boot.zones);
+  const handleSelectAlert = useCallback((alert: Alert | null) => {
+    appStore.setSelectedAlert(alert);
+  }, []);
 
-      if (session?.token) {
-        const alertList = await api.getAlerts().catch(() => []);
-        setAlerts(alertList);
-      }
-
-      const evList = await api.getEvents(50).catch(() => []);
-      setEvents(evList);
-
-      const heat = await api.getHeatmap().catch(() => ({ cells: [] }));
-      setHeatmapCells(heat.cells || []);
-    } catch (err) {
-      console.error("Failed to load StoreSight data", err);
-    } finally {
-      if (!isBackground) setLoading(false);
+  const handleSelectCamera = useCallback((camera: Camera | null) => {
+    appStore.setSelectedCamera(camera);
+    if (camera) {
+      appStore.setCurrentTab("cameras");
     }
-  };
+  }, []);
 
-  useEffect(() => {
-    loadData();
-    const interval = setInterval(() => {
-      loadData(true);
-    }, 8000);
-    return () => clearInterval(interval);
-  }, [session?.token]);
-
-  const handleAlertAction = async (
-    alertId: number,
-    action: "claim" | "resolve" | "false_positive" | "escalate",
-    note?: string
-  ) => {
-    try {
-      await api.actOnAlert(alertId, action, session?.user || "admin", note);
+  const handleAlertAction = useCallback(
+    async (
+      alertId: number,
+      action: "claim" | "resolve" | "false_positive" | "escalate",
+      note?: string
+    ) => {
+      await alertActionMutation.mutate({ alertId, action, note });
       analytics.trackEvent("Alerts", action, `alert_${alertId}`);
-      showToast(`Incident #${alertId} marked as ${action.replace("_", " ")}`, "success");
-      const updated = await api.getAlerts().catch(() => []);
-      setAlerts(updated);
-      if (selectedAlert?.id === alertId) {
-        const found = updated.find((a) => a.id === alertId);
-        if (found) setSelectedAlert(found);
-      }
-    } catch (err: any) {
-      showToast(`Action failed: ${err.message}`, "error");
-    }
-  };
+    },
+    [alertActionMutation]
+  );
 
-  const openAlertsCount = alerts.filter((a) => a.status === "open" || a.status === "reviewing").length;
+  const openAlertsCount = useMemo(() => {
+    return alerts.filter((a) => a.status === "open" || a.status === "reviewing").length;
+  }, [alerts]);
 
+  // Unauthenticated Layout
   if (!isAuthenticated) {
     return (
       <div className="flex h-screen w-screen items-center justify-center bg-background text-foreground font-sans p-4 overflow-y-auto">
-        {unauthLegalTab === "privacy" ? (
-          <div className="w-full max-w-2xl p-4 my-auto">
-            <PrivacyPolicyView onBack={() => setUnauthLegalTab(null)} />
-          </div>
-        ) : unauthLegalTab === "terms" ? (
-          <div className="w-full max-w-2xl p-4 my-auto">
-            <TermsView onBack={() => setUnauthLegalTab(null)} />
-          </div>
-        ) : (
-          <LoginModal
-            isOpen={true}
-            onClose={() => loadData()}
-            onOpenPrivacy={() => setUnauthLegalTab("privacy")}
-            onOpenTerms={() => setUnauthLegalTab("terms")}
-          />
-        )}
-        <CookieConsentBanner onOpenPrivacy={() => setUnauthLegalTab("privacy")} />
+        <Suspense fallback={<ViewSkeleton />}>
+          {unauthLegalTab === "privacy" ? (
+            <div className="w-full max-w-2xl p-4 my-auto">
+              <PrivacyPolicyView onBack={() => appStore.setUnauthLegalTab(null)} />
+            </div>
+          ) : unauthLegalTab === "terms" ? (
+            <div className="w-full max-w-2xl p-4 my-auto">
+              <TermsView onBack={() => appStore.setUnauthLegalTab(null)} />
+            </div>
+          ) : (
+            <LoginModal
+              isOpen={true}
+              onClose={() => refetchAlerts()}
+              onOpenPrivacy={() => appStore.setUnauthLegalTab("privacy")}
+              onOpenTerms={() => appStore.setUnauthLegalTab("terms")}
+            />
+          )}
+        </Suspense>
+
+        <CookieConsentBanner onOpenPrivacy={() => appStore.setUnauthLegalTab("privacy")} />
+        <ToastContainer />
       </div>
     );
   }
 
   return (
     <div className="flex h-screen w-screen overflow-hidden bg-background text-foreground font-sans text-[13px]">
-      {/* Toast Notification */}
-      {toastMessage && (
-        <div className="fixed bottom-4 right-4 z-50 animate-in fade-in duration-100">
-          <div className="px-3 py-2 rounded-[4px] border border-border bg-popover shadow-md text-xs font-normal flex items-center gap-2">
-            <span
-              className={`w-1.5 h-1.5 rounded-full ${
-                toastMessage.type === "success"
-                  ? "bg-emerald-500"
-                  : toastMessage.type === "error"
-                  ? "bg-red-500"
-                  : "bg-blue-500"
-              }`}
-            />
-            <span>{toastMessage.text}</span>
-          </div>
-        </div>
-      )}
+      {/* Toast Notification Stack */}
+      <ToastContainer />
 
-      {/* Global Command Palette (Ctrl+K) */}
+      {/* Global Command Palette */}
       <CommandPalette
         isOpen={commandPaletteOpen}
-        onClose={() => setCommandPaletteOpen(false)}
-        onSelectTab={(tab) => setCurrentTab(tab)}
+        onClose={() => appStore.setCommandPaletteOpen(false)}
+        onSelectTab={handleNavigate}
       />
 
-      {/* Login Modal */}
-      <LoginModal
-        isOpen={loginModalOpen}
-        onClose={() => {
-          setLoginModalOpen(false);
-          loadData();
-        }}
-        onOpenPrivacy={() => setCurrentTab("privacy")}
-        onOpenTerms={() => setCurrentTab("terms")}
-      />
-
-      {/* Plain Left Sidebar */}
+      {/* Responsive Collapsible Sidebar */}
       <Sidebar
         currentTab={currentTab}
-        onTabChange={(tab) => {
-          setCurrentTab(tab);
-          setMobileMenuOpen(false);
-          if (!isAuthenticated && (tab === "alerts" || tab === "review_queue" || tab.startsWith("admin_"))) {
-            setLoginModalOpen(true);
-          }
-        }}
+        onTabChange={handleNavigate}
         openAlertsCount={openAlertsCount}
         mobileOpen={mobileMenuOpen}
-        onCloseMobile={() => setMobileMenuOpen(false)}
+        onCloseMobile={() => appStore.setMobileMenuOpen(false)}
       />
 
-      {/* Main Container */}
+      {/* Main Content Area */}
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
-        {/* Top Minimal Header */}
         <Header
-          onOpenCommand={() => {
-            if (!isAuthenticated) setLoginModalOpen(true);
-            else setCommandPaletteOpen(true);
-          }}
+          onOpenCommand={() => appStore.setCommandPaletteOpen(true)}
           unreadCount={openAlertsCount}
-          onToggleMobileMenu={() => setMobileMenuOpen(true)}
+          onOpenNotifications={() => handleNavigate("alerts")}
+          onToggleMobileMenu={() => appStore.setMobileMenuOpen(!mobileMenuOpen)}
         />
 
-        {/* View Main Content */}
-        <main className="flex-1 overflow-y-auto p-4 sm:p-6">
-          {loading ? (
-            <div className="space-y-4">
-              <TableSkeleton rows={6} cols={4} />
-            </div>
-          ) : (
-            <>
+        <main className="flex-1 overflow-y-auto p-4 sm:p-6 bg-background">
+          <ErrorBoundary
+            key={currentTab}
+            fallbackTitle={`Failed to load ${currentTab} view`}
+            fallbackMessage="An error occurred while loading this view. You can retry or navigate to another view."
+            onReset={() => refetchAlerts()}
+          >
+            <Suspense fallback={<ViewSkeleton />}>
               {currentTab === "overview" && (
                 <OverviewView
                   cameras={cameras}
                   alerts={alerts}
                   zones={zones}
-                  onNavigate={(tab) => setCurrentTab(tab)}
-                  onSelectAlert={(a) => {
-                    setSelectedAlert(a);
-                    setCurrentTab("alerts");
-                  }}
-                  onSelectCamera={(c) => {
-                    setSelectedCamera(c);
-                    setCurrentTab("map");
-                  }}
+                  onNavigate={handleNavigate}
+                  onSelectAlert={handleSelectAlert}
+                  onSelectCamera={handleSelectCamera}
                 />
               )}
 
@@ -226,10 +200,7 @@ export function App() {
                   cameras={cameras}
                   alerts={alerts}
                   zones={zones}
-                  onSelectAlert={(a) => {
-                    setSelectedAlert(a);
-                    setCurrentTab("alerts");
-                  }}
+                  onSelectAlert={handleSelectAlert}
                 />
               )}
 
@@ -240,7 +211,7 @@ export function App() {
                   heatmapCells={heatmapCells}
                   events={events}
                   selectedCamera={selectedCamera}
-                  onSelectCamera={(c) => setSelectedCamera(c)}
+                  onSelectCamera={handleSelectCamera}
                 />
               )}
 
@@ -249,7 +220,7 @@ export function App() {
                   alerts={alerts}
                   onAction={handleAlertAction}
                   selectedAlert={selectedAlert}
-                  onSelectAlert={(a) => setSelectedAlert(a)}
+                  onSelectAlert={handleSelectAlert}
                   currentUser={session?.user}
                 />
               )}
@@ -264,15 +235,9 @@ export function App() {
                 <AssistantView
                   alerts={alerts}
                   cameras={cameras}
-                  onNavigate={(tab) => setCurrentTab(tab)}
-                  onSelectAlert={(a) => {
-                    setSelectedAlert(a);
-                    setCurrentTab("alerts");
-                  }}
-                  onSelectCamera={(c) => {
-                    setSelectedCamera(c);
-                    setCurrentTab("map");
-                  }}
+                  onNavigate={handleNavigate}
+                  onSelectAlert={handleSelectAlert}
+                  onSelectCamera={handleSelectCamera}
                 />
               )}
 
@@ -289,22 +254,20 @@ export function App() {
               )}
 
               {currentTab === "privacy" && (
-                <PrivacyPolicyView onBack={() => setCurrentTab("overview")} />
+                <PrivacyPolicyView onBack={() => handleNavigate("overview")} />
               )}
 
               {currentTab === "terms" && (
-                <TermsView onBack={() => setCurrentTab("overview")} />
+                <TermsView onBack={() => handleNavigate("overview")} />
               )}
 
               {currentTab === "not_found" && (
-                <NotFoundView onNavigate={(t) => setCurrentTab(t)} />
+                <NotFoundView onBack={() => handleNavigate("overview")} />
               )}
-            </>
-          )}
+            </Suspense>
+          </ErrorBoundary>
         </main>
       </div>
-
-      <CookieConsentBanner onOpenPrivacy={() => setCurrentTab("privacy")} />
     </div>
   );
 }
