@@ -177,12 +177,37 @@ export function Sidebar({
           </div>
         </div>
 
-        {/* Footer info */}
-        <div className="p-3.5 border-t border-border bg-surface/30 text-[12px] text-text-secondary flex items-center justify-between">
-          <span className="font-mono text-[11px] text-text-tertiary">v1.0.0 · Refero</span>
-          <span className="inline-flex items-center gap-1.5 text-[11px] font-medium text-emerald-600 dark:text-emerald-400">
-            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse-dot" /> Live Store Stream
-          </span>
+        {/* Footer info & Legal Links */}
+        <div className="p-3.5 border-t border-border bg-surface/30 text-[11px] text-text-tertiary flex flex-col gap-2">
+          <div className="flex items-center justify-between">
+            <span className="font-mono text-[11px] text-text-tertiary">v1.0.0 Enterprise</span>
+            <span className="inline-flex items-center gap-1.5 text-[11px] font-medium text-emerald-600 dark:text-emerald-400">
+              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse-dot" /> Live Stream
+            </span>
+          </div>
+          <div className="flex items-center gap-2 pt-1 border-t border-border/40 text-[11px]">
+            <button
+              type="button"
+              onClick={() => onTabChange("privacy")}
+              className={cn(
+                "hover:text-foreground transition underline-offset-2 hover:underline",
+                currentTab === "privacy" && "text-primary font-semibold"
+              )}
+            >
+              Privacy Policy
+            </button>
+            <span>·</span>
+            <button
+              type="button"
+              onClick={() => onTabChange("terms")}
+              className={cn(
+                "hover:text-foreground transition underline-offset-2 hover:underline",
+                currentTab === "terms" && "text-primary font-semibold"
+              )}
+            >
+              Terms of Service
+            </button>
+          </div>
         </div>
       </aside>
     </>

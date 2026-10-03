@@ -292,7 +292,7 @@ export function AssistantView({
               key={i}
               type="button"
               onClick={() => handleSend(s)}
-              className="text-[12px] font-medium px-3 py-1 rounded-full border border-border bg-card hover:bg-primary/10 hover:border-primary/30 hover:text-primary text-text-secondary transition shadow-xs"
+              className="text-[12px] font-medium px-3 py-1.5 rounded-[6px] border border-border bg-card hover:bg-surface-elevated hover:border-primary/40 hover:text-foreground text-text-secondary transition shadow-xs"
             >
               {s}
             </button>

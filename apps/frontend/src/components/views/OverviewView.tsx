@@ -293,7 +293,7 @@ export function OverviewView({
                           </span>
                         </td>
                         <td className="px-4 py-3 text-text-secondary hidden sm:table-cell text-[13px]">
-                          {cam.location || `Zone #${cam.zone_id || "—"}`}
+                          {cam.location || `Zone #${cam.zone_id || "-"}`}
                         </td>
                         <td className="px-4 py-3 text-right font-mono font-medium text-text-secondary hidden md:table-cell tabular-nums text-[13px]">
                           {cam.fps || 15} FPS
@@ -324,7 +324,7 @@ export function OverviewView({
                     <span className={cn("w-2 h-2 rounded-full", status.dotClass)} aria-hidden="true" />
                   </div>
                   <div className="text-[12px] text-text-secondary truncate mb-2">
-                    {cam.location || `Zone #${cam.zone_id || "—"}`}
+                    {cam.location || `Zone #${cam.zone_id || "-"}`}
                   </div>
                   <div className="text-[11px] font-mono text-text-tertiary pt-2 border-t border-border/50">
                     {cam.fps || 15} FPS · {cam.latency_ms || 28}ms

@@ -3,9 +3,9 @@ import { Alert, Camera, StoreOption, UserSession, ViewTab } from "../types";
 import { api } from "../lib/api";
 
 export const STORES: StoreOption[] = [
-  { id: "1", name: "Store #01 — Downtown Flagship" },
-  { id: "2", name: "Store #02 — Metro Center" },
-  { id: "3", name: "Store #03 — Westside Mall" },
+  { id: "1", name: "Store #01 - Downtown Flagship" },
+  { id: "2", name: "Store #02 - Metro Center" },
+  { id: "3", name: "Store #03 - Westside Mall" },
 ];
 
 interface AppState {

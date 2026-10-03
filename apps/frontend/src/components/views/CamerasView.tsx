@@ -360,7 +360,7 @@ export function CamerasView({ cameras, alerts = [] }: CamerasViewProps) {
                 isFocused ? "ring-2 ring-primary shadow-modal" : "hover:border-zinc-500"
               )}
             >
-              {/* Window Title Bar — Classic Security Feed Window Style */}
+              {/* Window Title Bar - Classic Security Feed Window Style */}
               <div className="px-3.5 py-2 bg-gradient-to-r from-zinc-900 to-zinc-900/90 border-b border-zinc-800 text-zinc-200 flex items-center justify-between select-none z-10">
                 <div className="flex items-center gap-2.5">
                   {/* Traffic Light Dots */}
@@ -370,7 +370,7 @@ export function CamerasView({ cameras, alerts = [] }: CamerasViewProps) {
                     <span className="w-2.5 h-2.5 rounded-full bg-[#27c93f] inline-block shadow-xs" />
                   </div>
                   <span className="font-mono text-[13px] font-semibold text-white tracking-wide ml-1">
-                    Security Feed — {cam.name}
+                    Security Feed : {cam.name}
                   </span>
                   <span className="text-[12px] text-zinc-400 font-sans hidden sm:inline truncate max-w-[200px]">
                     ({cam.location || preset.zoneName})
@@ -393,7 +393,7 @@ export function CamerasView({ cameras, alerts = [] }: CamerasViewProps) {
                 </div>
               </div>
 
-              {/* Feed Screen Canvas — Photographic Surveillance Feed */}
+              {/* Feed Screen Canvas - Photographic Surveillance Feed */}
               <div className="relative w-full aspect-video bg-black overflow-hidden flex items-center justify-center select-none">
                 {/* Photographic Surveillance Camera Photo */}
                 {!hasImgError ? (
