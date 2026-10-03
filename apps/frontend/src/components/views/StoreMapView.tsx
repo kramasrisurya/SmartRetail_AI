@@ -18,6 +18,7 @@ import {
 } from "lucide-react";
 import { Camera, HeatmapCell, Zone, EventItem } from "../../types";
 import { cn, formatTimeAgo, getStatusDot } from "../../lib/utils";
+import { useAppStore } from "../../store/useAppStore";
 
 interface StoreMapViewProps {
   zones: Zone[];
@@ -147,6 +148,9 @@ export function StoreMapView({
   selectedCamera,
   onSelectCamera,
 }: StoreMapViewProps) {
+  const activeStore = useAppStore((s) => s.activeStore);
+  const storeId = String(activeStore?.id || "1");
+
   const [heatmapIntensity, setHeatmapIntensity] = useState<number>(65);
   const [showHeatmap, setShowHeatmap] = useState(true);
   const [showFovCones, setShowFovCones] = useState(true);
@@ -374,7 +378,7 @@ export function StoreMapView({
               </span>
             </div>
             <span className="font-mono text-[11px] text-text-tertiary">
-              Flagship Supermarket · Level 1 Floor Plan (Scale 1:100)
+              {activeStore ? activeStore.name : "Downtown Flagship"} · Level 1 Floor Plan (Scale 1:100)
             </span>
           </div>
 
@@ -968,7 +972,10 @@ export function StoreMapView({
                   {/* Real Photographic Mini-Feed Preview */}
                   <div className="relative rounded-[8px] overflow-hidden border border-border aspect-video bg-black shadow-xs">
                     <img
-                      src={`/cameras/cam${Math.min(6, Math.max(1, selectedCamera.id))}.jpg`}
+                      src={`/cameras/store${storeId}/cam${Math.min(6, Math.max(1, selectedCamera.id))}.jpg`}
+                      onError={(e) => {
+                        e.currentTarget.src = `/cameras/cam${Math.min(6, Math.max(1, selectedCamera.id))}.jpg`;
+                      }}
                       alt={selectedCamera.name}
                       className="w-full h-full object-cover"
                     />
@@ -976,13 +983,14 @@ export function StoreMapView({
 
                     {/* OpenCV Style OSD Tags */}
                     <div className="absolute top-2 left-2 pointer-events-none">
-                      <span className="text-[#ff1a1a] font-mono font-bold text-[11px] tracking-wide drop-shadow-[0_1px_2px_rgba(0,0,0,0.9)]">
+                      <span className="inline-flex items-center gap-1.5 font-mono text-[10px] font-semibold text-red-400 bg-black/70 backdrop-blur-xs border border-red-500/30 px-2 py-0.5 rounded-[4px]">
+                        <span className="w-1.5 h-1.5 rounded-full bg-red-500" />
                         Room Status: Occupied
                       </span>
                     </div>
 
                     <div className="absolute top-2 right-2 pointer-events-none">
-                      <span className="inline-flex items-center gap-1 font-mono text-[10px] font-semibold text-red-400 bg-black/60 px-1.5 py-0.5 rounded border border-red-500/30">
+                      <span className="inline-flex items-center gap-1 font-mono text-[10px] font-semibold text-red-400 bg-black/70 backdrop-blur-xs px-2 py-0.5 rounded-[4px] border border-red-500/30">
                         <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse" />
                         LIVE
                       </span>
