@@ -18,7 +18,19 @@ export function formatTimeAgo(isoString?: string | null): string {
   }
 }
 
-// Filled badges for incident severity
+// Refero Curated Categorical Chart Palette
+export const REFERO_CHART_PALETTE = [
+  "#4f46e5", // Indigo (Primary)
+  "#06b6d4", // Cyan
+  "#f59e0b", // Amber
+  "#10b981", // Emerald
+  "#f43f5e", // Rose
+  "#8b5cf6", // Violet
+  "#ec4899", // Pink
+  "#14b8a6", // Teal
+];
+
+// Filled badges for incident severity (8-12% opacity tints, 6px radius)
 export function getSeverityBadge(priority: string) {
   switch (priority.toLowerCase()) {
     case "urgent":
@@ -26,7 +38,7 @@ export function getSeverityBadge(priority: string) {
       return {
         label: "Urgent",
         className:
-          "bg-red-500/10 text-red-600 dark:text-red-400 border border-red-500/20 font-medium text-[11px] px-1.5 py-0.5 rounded-[4px]",
+          "bg-red-500/10 text-red-600 dark:text-red-400 border border-red-500/20 font-medium text-[12px] px-2.5 py-1 rounded-[6px] inline-flex items-center gap-1.5",
         bg: "bg-red-500/10 border border-red-500/20",
         text: "text-red-600 dark:text-red-400",
         dot: "bg-red-500",
@@ -35,7 +47,7 @@ export function getSeverityBadge(priority: string) {
       return {
         label: "High",
         className:
-          "bg-amber-500/10 text-amber-700 dark:text-amber-400 border border-amber-500/20 font-medium text-[11px] px-1.5 py-0.5 rounded-[4px]",
+          "bg-amber-500/10 text-amber-700 dark:text-amber-400 border border-amber-500/20 font-medium text-[12px] px-2.5 py-1 rounded-[6px] inline-flex items-center gap-1.5",
         bg: "bg-amber-500/10 border border-amber-500/20",
         text: "text-amber-700 dark:text-amber-400",
         dot: "bg-amber-500",
@@ -44,7 +56,7 @@ export function getSeverityBadge(priority: string) {
       return {
         label: "Medium",
         className:
-          "bg-muted text-muted-foreground border border-border font-medium text-[11px] px-1.5 py-0.5 rounded-[4px]",
+          "bg-muted text-muted-foreground border border-border font-medium text-[12px] px-2.5 py-1 rounded-[6px] inline-flex items-center gap-1.5",
         bg: "bg-muted border border-border",
         text: "text-muted-foreground",
         dot: "bg-zinc-400",
@@ -52,8 +64,9 @@ export function getSeverityBadge(priority: string) {
     default:
       return {
         label: "Low",
-        className: "text-muted-foreground text-[11px] px-1 py-0.5",
-        bg: "bg-transparent",
+        className:
+          "bg-muted/40 text-muted-foreground border border-border/60 text-[12px] px-2 py-0.5 rounded-[6px] inline-flex items-center gap-1.5",
+        bg: "bg-muted/40 border border-border/60",
         text: "text-muted-foreground",
         dot: "bg-zinc-400",
       };
@@ -68,7 +81,7 @@ export function getStatusDot(status: string) {
     case "resolved":
       return {
         label: status === "active" ? "Online" : "Resolved",
-        dotClass: "bg-emerald-500",
+        dotClass: "bg-emerald-500 animate-pulse-dot",
         dot: "bg-emerald-500",
       };
     case "degraded":

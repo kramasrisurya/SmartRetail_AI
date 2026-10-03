@@ -56,7 +56,7 @@ function FormattedAssistantText({
               key={idx}
               type="button"
               onClick={() => onAlertClick(aid)}
-              className="inline-flex items-center px-1.5 py-0.5 mx-0.5 rounded-[3px] bg-red-500/10 text-red-600 dark:text-red-400 border border-red-500/20 font-medium hover:bg-red-500/20 transition cursor-pointer text-[11px]"
+              className="inline-flex items-center px-2 py-0.5 mx-1 rounded-[6px] bg-red-500/10 text-red-600 dark:text-red-400 border border-red-500/20 font-semibold hover:bg-red-500/20 transition cursor-pointer text-[12px]"
               title={`View Alert #${aid}`}
             >
               {part}
@@ -72,7 +72,7 @@ function FormattedAssistantText({
               key={idx}
               type="button"
               onClick={() => onCameraClick(camRef)}
-              className="inline-flex items-center px-1.5 py-0.5 mx-0.5 rounded-[3px] bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20 font-medium hover:bg-blue-500/20 transition cursor-pointer text-[11px]"
+              className="inline-flex items-center px-2 py-0.5 mx-1 rounded-[6px] bg-primary/10 text-primary border border-primary/20 font-semibold hover:bg-primary/20 transition cursor-pointer text-[12px]"
               title={`View Camera ${camRef}`}
             >
               {part}
@@ -201,37 +201,39 @@ export function AssistantView({
   };
 
   return (
-    <div className="max-w-4xl mx-auto h-[calc(100vh-6rem)] flex flex-col justify-between overflow-hidden animate-in fade-in duration-150">
+    <div className="max-w-4xl mx-auto h-[calc(100vh-7rem)] flex flex-col justify-between overflow-hidden animate-fade-up">
       {/* Header */}
-      <div className="border-b border-border pb-3 mb-2 flex items-center justify-between">
+      <div className="border-b border-border pb-4 mb-3 flex items-center justify-between">
         <div>
-          <h1 className="text-base font-semibold text-foreground tracking-tight flex items-center gap-2">
-            <Sparkles className="w-4 h-4 text-primary" />
-            Store Intelligence Assistant
+          <h1 className="text-[20px] font-semibold text-foreground tracking-tight flex items-center gap-2.5">
+            <div className="w-7 h-7 rounded-[8px] bg-primary/10 text-primary border border-primary/20 flex items-center justify-center">
+              <Sparkles className="w-4 h-4" />
+            </div>
+            <span>Store Intelligence AI Assistant</span>
           </h1>
-          <p className="text-xs text-muted-foreground">
-            Auditable decision support grounded in store vision facts & telemetry
+          <p className="text-[14px] text-text-secondary mt-0.5">
+            Auditable decision support grounded in multi-camera sensor graphs & spatial telemetry
           </p>
         </div>
       </div>
 
       {/* Messages Scroll Area */}
-      <div className="flex-1 overflow-y-auto space-y-4 pr-2 py-2" role="log" aria-live="polite">
+      <div className="flex-1 overflow-y-auto space-y-4 pr-3 py-2" role="log" aria-live="polite">
         {messages.map((m) => {
           const isUser = m.sender === "user";
           return (
-            <div key={m.id} className={cn("flex gap-3 text-xs", isUser ? "justify-end" : "justify-start")}>
+            <div key={m.id} className={cn("flex gap-3 text-[14px]", isUser ? "justify-end" : "justify-start")}>
               {!isUser && (
-                <div className="w-7 h-7 rounded-full bg-primary/10 text-primary flex items-center justify-center shrink-0 mt-0.5 border border-primary/20">
+                <div className="w-8 h-8 rounded-full bg-primary/10 text-primary flex items-center justify-center shrink-0 mt-0.5 border border-primary/20 shadow-xs">
                   <Bot className="w-4 h-4" />
                 </div>
               )}
 
               <div
                 className={cn(
-                  "max-w-xl p-3.5 rounded-lg space-y-2 leading-relaxed shadow-sm",
+                  "max-w-xl p-4 rounded-[10px] space-y-2.5 leading-relaxed shadow-card transition-all",
                   isUser
-                    ? "bg-primary text-primary-foreground font-medium rounded-tr-none"
+                    ? "bg-primary/10 text-foreground border border-primary/20 rounded-tr-none font-medium"
                     : m.isError
                     ? "bg-destructive/10 text-destructive border border-destructive/20 rounded-tl-none"
                     : "bg-card border border-border text-foreground rounded-tl-none"
@@ -246,13 +248,13 @@ export function AssistantView({
                 </div>
 
                 {m.suggestions && m.suggestions.length > 0 && (
-                  <div className="pt-2 border-t border-border/40 flex flex-wrap gap-1.5">
+                  <div className="pt-2.5 border-t border-border/50 flex flex-wrap gap-2">
                     {m.suggestions.map((s, idx) => (
                       <button
                         key={idx}
                         type="button"
                         onClick={() => handleSend(s)}
-                        className="px-2 py-1 rounded bg-muted/60 hover:bg-muted text-[11px] text-muted-foreground hover:text-foreground transition-colors border border-border/50 text-left"
+                        className="px-2.5 py-1 rounded-[6px] bg-surface-elevated hover:bg-primary/10 hover:text-primary hover:border-primary/30 text-[12px] text-text-secondary transition-all border border-border/60 text-left font-medium"
                       >
                         {s}
                       </button>
@@ -262,7 +264,7 @@ export function AssistantView({
               </div>
 
               {isUser && (
-                <div className="w-7 h-7 rounded-full bg-muted text-foreground flex items-center justify-center shrink-0 mt-0.5 border border-border">
+                <div className="w-8 h-8 rounded-full bg-surface-elevated text-foreground flex items-center justify-center shrink-0 mt-0.5 border border-border shadow-xs">
                   <User className="w-4 h-4" />
                 </div>
               )}
@@ -271,11 +273,11 @@ export function AssistantView({
         })}
 
         {loading && (
-          <div className="flex gap-3 text-xs items-center text-muted-foreground">
-            <div className="w-7 h-7 rounded-full bg-primary/10 text-primary flex items-center justify-center shrink-0 border border-primary/20">
-              <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+          <div className="flex gap-3 text-[13px] items-center text-text-secondary animate-fade-up">
+            <div className="w-8 h-8 rounded-full bg-primary/10 text-primary flex items-center justify-center shrink-0 border border-primary/20">
+              <RefreshCw className="w-4 h-4 animate-spin" />
             </div>
-            <span>Analyzing store events and sensor graphs...</span>
+            <span>Analyzing multi-camera spatial graphs and telemetry facts...</span>
           </div>
         )}
 
@@ -283,14 +285,14 @@ export function AssistantView({
       </div>
 
       {/* Input Form & Quick Prompt Chips */}
-      <div className="pt-3 border-t border-border space-y-2">
-        <div className="flex flex-wrap gap-1.5">
+      <div className="pt-4 border-t border-border space-y-3">
+        <div className="flex flex-wrap gap-2">
           {SUGGESTIONS.slice(0, 3).map((s, i) => (
             <button
               key={i}
               type="button"
               onClick={() => handleSend(s)}
-              className="text-[11px] px-2 py-0.5 rounded-full border border-border bg-background hover:bg-muted text-muted-foreground hover:text-foreground transition"
+              className="text-[12px] font-medium px-3 py-1 rounded-full border border-border bg-card hover:bg-primary/10 hover:border-primary/30 hover:text-primary text-text-secondary transition shadow-xs"
             >
               {s}
             </button>
@@ -302,21 +304,21 @@ export function AssistantView({
             e.preventDefault();
             handleSend();
           }}
-          className="flex items-center gap-2"
+          className="flex items-center gap-3"
         >
           <input
             type="text"
             value={input}
             onChange={(e) => setInput(e.target.value)}
-            placeholder="Ask anything about cameras, incidents, dwell metrics, or rules..."
+            placeholder="Ask about camera statuses, alert explanations, dwell metrics, or rules..."
             disabled={loading}
-            className="flex-1 px-3 py-2 rounded-lg border border-border bg-background text-foreground text-xs placeholder:text-muted-foreground/60 focus:outline-none focus:border-primary transition"
+            className="flex-1 px-4 py-2.5 rounded-[8px] border border-border bg-card text-foreground text-[14px] placeholder:text-text-tertiary focus:outline-none focus:ring-2 focus:ring-primary shadow-xs transition"
           />
           <button
             type="submit"
             disabled={!input.trim() || loading}
             aria-label="Send query to assistant"
-            className="p-2 rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 transition disabled:opacity-50 shadow-sm"
+            className="p-2.5 rounded-[8px] bg-primary text-primary-foreground hover:bg-primary-hover active:bg-indigo-800 transition disabled:opacity-50 shadow-xs"
           >
             <Send className="w-4 h-4" />
           </button>

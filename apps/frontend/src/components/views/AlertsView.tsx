@@ -13,6 +13,7 @@ import {
   ShieldCheck,
   CheckSquare,
   Square,
+  Sparkles,
 } from "lucide-react";
 import { Alert, AlertActionType } from "../../types";
 import { cn, formatTimeAgo, getSeverityBadge, getStatusDot } from "../../lib/utils";
@@ -102,54 +103,30 @@ export function AlertsView({
   };
 
   return (
-    <div className="flex h-[calc(100vh-6rem)] overflow-hidden">
+    <div className="flex h-[calc(100vh-7rem)] overflow-hidden relative max-w-7xl mx-auto animate-fade-up">
       {/* Left: Main Alert List Area */}
-      <div className="flex-1 flex flex-col min-w-0 pr-0 lg:pr-4 overflow-y-auto">
+      <div className="flex-1 flex flex-col min-w-0 pr-0 lg:pr-5 overflow-y-auto">
         {/* Controls Bar */}
-        <div className="space-y-3 pb-3 border-b border-border">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+        <div className="space-y-4 pb-4 border-b border-border">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div>
-              <h1 className="text-base font-semibold text-foreground tracking-tight">Alerts</h1>
-              <p className="text-xs text-muted-foreground tabular-nums">
-                {filteredAlerts.length} of {alerts.length} incidents recorded
+              <h1 className="text-[20px] font-semibold text-foreground tracking-tight">Incident Alerts & Triage</h1>
+              <p className="text-[14px] text-text-secondary tabular-nums">
+                {filteredAlerts.length} of {alerts.length} incidents recorded · Loss prevention AI stream
               </p>
             </div>
-
-            {selectedIds.length > 0 && (
-              <div className="flex items-center gap-2 animate-in fade-in">
-                <span className="text-xs text-muted-foreground font-medium">
-                  {selectedIds.length} selected:
-                </span>
-                <button
-                  type="button"
-                  onClick={() => handleBulkAction("resolve")}
-                  disabled={submittingAction}
-                  className="px-2.5 py-1 rounded bg-foreground text-background text-xs font-medium hover:opacity-90 transition disabled:opacity-50"
-                >
-                  Resolve Selected
-                </button>
-                <button
-                  type="button"
-                  onClick={() => handleBulkAction("claim")}
-                  disabled={submittingAction}
-                  className="px-2.5 py-1 rounded border border-border hover:bg-muted text-xs transition disabled:opacity-50"
-                >
-                  Claim
-                </button>
-              </div>
-            )}
           </div>
 
           {/* Filter / Search Row */}
-          <div className="flex flex-wrap items-center gap-2">
-            <div className="relative flex-1 min-w-[200px]">
-              <Search className="w-3.5 h-3.5 text-muted-foreground absolute left-2.5 top-1/2 -translate-y-1/2" />
+          <div className="flex flex-wrap items-center gap-2.5">
+            <div className="relative flex-1 min-w-[240px]">
+              <Search className="w-4 h-4 text-text-tertiary absolute left-3 top-1/2 -translate-y-1/2" />
               <input
                 type="text"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                placeholder="Search alerts by sku, zone, rule, or subject..."
-                className="w-full pl-8 pr-3 py-1.5 rounded-[4px] border border-border bg-background text-foreground text-xs placeholder:text-muted-foreground/60 focus:outline-none focus:border-foreground transition"
+                placeholder="Search alerts by sku, zone, heuristic, or subject..."
+                className="w-full pl-9 pr-3 py-2 rounded-[8px] border border-border bg-card text-foreground text-[13px] placeholder:text-text-tertiary focus:outline-none focus:ring-2 focus:ring-primary shadow-xs transition"
               />
             </div>
 
@@ -157,7 +134,7 @@ export function AlertsView({
               value={priorityFilter}
               onChange={(e) => setPriorityFilter(e.target.value)}
               aria-label="Filter by priority"
-              className="px-2.5 py-1.5 rounded-[4px] border border-border bg-background text-foreground text-xs focus:outline-none focus:border-foreground"
+              className="px-3 py-2 rounded-[8px] border border-border bg-card text-foreground text-[13px] font-medium focus:outline-none focus:ring-2 focus:ring-primary shadow-xs"
             >
               <option value="all">All Priorities</option>
               <option value="urgent">Urgent</option>
@@ -170,7 +147,7 @@ export function AlertsView({
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
               aria-label="Filter by status"
-              className="px-2.5 py-1.5 rounded-[4px] border border-border bg-background text-foreground text-xs focus:outline-none focus:border-foreground"
+              className="px-3 py-2 rounded-[8px] border border-border bg-card text-foreground text-[13px] font-medium focus:outline-none focus:ring-2 focus:ring-primary shadow-xs"
             >
               <option value="all">All Statuses</option>
               <option value="open">Open</option>
@@ -188,7 +165,7 @@ export function AlertsView({
                   setPriorityFilter("all");
                   setStatusFilter("all");
                 }}
-                className="text-xs text-muted-foreground hover:text-foreground underline px-1"
+                className="text-[13px] text-primary hover:underline px-2 font-medium"
               >
                 Reset filters
               </button>
@@ -197,14 +174,14 @@ export function AlertsView({
         </div>
 
         {/* Alerts Table */}
-        <div className="mt-3 flex-1">
+        <div className="mt-4 flex-1">
           {filteredAlerts.length === 0 ? (
             <EmptyState
               icon={ShieldCheck}
               title="No Incidents Match Filter"
-              description="Try adjusting your search query, priority filter, or status filter to see other alerts."
+              description="Adjust your search query or filters to inspect past or lower-priority alerts."
               action={{
-                label: "Clear Filters",
+                label: "Clear All Filters",
                 onClick: () => {
                   setSearch("");
                   setPriorityFilter("all");
@@ -213,128 +190,159 @@ export function AlertsView({
               }}
             />
           ) : (
-            <div className="border border-border rounded-[6px] overflow-hidden bg-background shadow-sm">
-              <table className="w-full text-left text-xs" aria-label="Alerts Table">
-                <thead className="bg-muted/50 border-b border-border text-muted-foreground font-medium">
-                  <tr className="h-8">
-                    <th scope="col" className="px-3 py-1 w-8">
-                      <button
-                        type="button"
-                        onClick={handleSelectAll}
-                        aria-label="Select all alerts"
-                        className="text-muted-foreground hover:text-foreground"
-                      >
-                        {selectedIds.length === filteredAlerts.length ? (
-                          <CheckSquare className="w-3.5 h-3.5 text-primary" />
-                        ) : (
-                          <Square className="w-3.5 h-3.5" />
-                        )}
-                      </button>
-                    </th>
-                    <th scope="col" className="px-3 py-1 w-24">Severity</th>
-                    <th scope="col" className="px-3 py-1">Incident Details</th>
-                    <th scope="col" className="px-3 py-1 hidden sm:table-cell">Location</th>
-                    <th scope="col" className="px-3 py-1 hidden md:table-cell w-24 text-right">Confidence</th>
-                    <th scope="col" className="px-3 py-1 w-24 text-right">Status</th>
-                    <th scope="col" className="px-3 py-1 w-24 text-right">Created</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-border">
-                  {filteredAlerts.map((alert) => {
-                    const severity = getSeverityBadge(alert.priority);
-                    const status = getStatusDot(alert.status);
-                    const isSelected = selectedAlert?.id === alert.id;
-                    const isChecked = selectedIds.includes(alert.id);
-
-                    return (
-                      <tr
-                        key={alert.id}
-                        onClick={() => onSelectAlert(alert)}
-                        className={cn(
-                          "hover:bg-muted/30 cursor-pointer transition-colors",
-                          isSelected && "bg-muted/50 font-medium"
-                        )}
-                      >
-                        <td className="px-3 py-2" onClick={(e) => handleToggleSelect(alert.id, e)}>
-                          {isChecked ? (
-                            <CheckSquare className="w-3.5 h-3.5 text-primary" />
+            <div className="border border-border rounded-[10px] overflow-hidden bg-card shadow-card">
+              <div className="overflow-x-auto">
+                <table className="w-full text-left text-[14px]" aria-label="Alerts Table">
+                  <thead className="bg-surface-elevated/60 border-b border-border text-text-tertiary font-semibold text-[12px] uppercase tracking-[0.04em]">
+                    <tr className="h-10">
+                      <th scope="col" className="px-4 py-2 w-10">
+                        <button
+                          type="button"
+                          onClick={handleSelectAll}
+                          aria-label="Select all alerts"
+                          className="text-text-tertiary hover:text-foreground"
+                        >
+                          {selectedIds.length === filteredAlerts.length ? (
+                            <CheckSquare className="w-4 h-4 text-primary" />
                           ) : (
-                            <Square className="w-3.5 h-3.5 text-muted-foreground" />
+                            <Square className="w-4 h-4" />
                           )}
-                        </td>
-                        <td className="px-3 py-2">
-                          <span
-                            className={cn(
-                              "inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[11px] font-medium",
-                              severity.bg,
-                              severity.text
+                        </button>
+                      </th>
+                      <th scope="col" className="px-4 py-2 w-28">Severity</th>
+                      <th scope="col" className="px-4 py-2">Incident Details</th>
+                      <th scope="col" className="px-4 py-2 hidden sm:table-cell">Location</th>
+                      <th scope="col" className="px-4 py-2 hidden md:table-cell w-28 text-right">Confidence</th>
+                      <th scope="col" className="px-4 py-2 w-28 text-right">Status</th>
+                      <th scope="col" className="px-4 py-2 w-28 text-right">Created</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-border/60">
+                    {filteredAlerts.map((alert) => {
+                      const severity = getSeverityBadge(alert.priority);
+                      const status = getStatusDot(alert.status);
+                      const isSelected = selectedAlert?.id === alert.id;
+                      const isChecked = selectedIds.includes(alert.id);
+
+                      return (
+                        <tr
+                          key={alert.id}
+                          onClick={() => onSelectAlert(alert)}
+                          className={cn(
+                            "hover:bg-primary/[0.03] cursor-pointer transition-colors duration-150 relative",
+                            isSelected && "bg-primary/[0.06] font-medium"
+                          )}
+                        >
+                          <td className="px-4 py-3" onClick={(e) => handleToggleSelect(alert.id, e)}>
+                            {isChecked ? (
+                              <CheckSquare className="w-4 h-4 text-primary" />
+                            ) : (
+                              <Square className="w-4 h-4 text-text-tertiary" />
                             )}
-                          >
-                            <span className={cn("w-1.5 h-1.5 rounded-full", severity.dot)} aria-hidden="true" />
-                            {alert.priority}
-                          </span>
-                        </td>
-                        <td className="px-3 py-2">
-                          <div className="font-medium text-foreground">
-                            {alert.title || alert.rules.join(", ") || `Incident #${alert.id}`}
-                          </div>
-                          {alert.summary && (
-                            <div className="text-[11px] text-muted-foreground truncate max-w-sm">
-                              {alert.summary}
+                          </td>
+                          <td className="px-4 py-3">
+                            <span className={severity.className}>
+                              <span className={cn("w-1.5 h-1.5 rounded-full", severity.dot)} aria-hidden="true" />
+                              {alert.priority}
+                            </span>
+                          </td>
+                          <td className="px-4 py-3">
+                            <div className="font-semibold text-foreground text-[14px]">
+                              {alert.title || alert.rules.join(", ") || `Incident #${alert.id}`}
                             </div>
-                          )}
-                        </td>
-                        <td className="px-3 py-2 text-muted-foreground hidden sm:table-cell">
-                          {alert.signals?.camera || alert.camera || "CAM-01"} ·{" "}
-                          {alert.signals?.zone || alert.zone || "Main Floor"}
-                        </td>
-                        <td className="px-3 py-2 text-right font-mono text-muted-foreground hidden md:table-cell tabular-nums">
-                          {Math.round(alert.confidence * 100)}%
-                        </td>
-                        <td className="px-3 py-2 text-right">
-                          <span className="inline-flex items-center gap-1.5 text-xs capitalize text-muted-foreground">
-                            <span className={cn("w-1.5 h-1.5 rounded-full", status.dot)} aria-hidden="true" />
-                            {alert.status.replace("_", " ")}
-                          </span>
-                        </td>
-                        <td className="px-3 py-2 text-right text-muted-foreground tabular-nums">
-                          {formatTimeAgo(alert.created_at || "")}
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
+                            {alert.summary && (
+                              <div className="text-[13px] text-text-secondary truncate max-w-sm mt-0.5">
+                                {alert.summary}
+                              </div>
+                            )}
+                          </td>
+                          <td className="px-4 py-3 text-text-secondary hidden sm:table-cell text-[13px]">
+                            {alert.signals?.camera || alert.camera || "CAM-01"} ·{" "}
+                            {alert.signals?.zone || alert.zone || "Main Floor"}
+                          </td>
+                          <td className="px-4 py-3 text-right font-mono font-medium text-text-secondary hidden md:table-cell tabular-nums text-[13px]">
+                            {Math.round(alert.confidence * 100)}%
+                          </td>
+                          <td className="px-4 py-3 text-right">
+                            <span className="inline-flex items-center gap-1.5 text-[12px] capitalize font-medium text-text-secondary">
+                              <span className={cn("w-1.5 h-1.5 rounded-full", status.dotClass)} aria-hidden="true" />
+                              {alert.status.replace("_", " ")}
+                            </span>
+                          </td>
+                          <td className="px-4 py-3 text-right text-text-tertiary tabular-nums text-[13px]">
+                            {formatTimeAgo(alert.created_at || "")}
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
             </div>
           )}
         </div>
       </div>
 
-      {/* Right: Selected Incident Detail Drawer */}
+      {/* Floating Bulk Action Bar at Bottom Center */}
+      {selectedIds.length > 0 && (
+        <div className="fixed bottom-8 left-1/2 -translate-x-1/2 z-40 bg-card border border-border shadow-modal rounded-[10px] p-3 px-5 flex items-center gap-4 animate-slide-in-bottom">
+          <span className="text-[13px] font-semibold text-foreground">
+            {selectedIds.length} incidents selected
+          </span>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => handleBulkAction("resolve")}
+              disabled={submittingAction}
+              className="px-3 py-1.5 rounded-[8px] bg-primary text-primary-foreground text-[13px] font-medium hover:bg-primary-hover transition shadow-xs disabled:opacity-50"
+            >
+              Resolve All
+            </button>
+            <button
+              type="button"
+              onClick={() => handleBulkAction("claim")}
+              disabled={submittingAction}
+              className="px-3 py-1.5 rounded-[8px] border border-border bg-surface-elevated hover:bg-muted text-[13px] font-medium transition disabled:opacity-50"
+            >
+              Claim Review
+            </button>
+            <button
+              type="button"
+              onClick={() => setSelectedIds([])}
+              className="p-1 rounded-[6px] text-text-tertiary hover:text-foreground"
+              aria-label="Clear selection"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Right: Selected Incident Detail Drawer (400px wide) */}
       {selectedAlert && (
         <aside
           role="region"
           aria-label="Incident Detail Drawer"
-          className="w-full lg:w-96 border-l border-border bg-card/60 p-4 flex flex-col justify-between overflow-y-auto animate-in slide-in-from-right-4 duration-150"
+          className="w-full lg:w-[400px] border-l border-border bg-card p-5 flex flex-col justify-between overflow-y-auto shadow-card animate-slide-in-right shrink-0"
         >
-          <div className="space-y-4">
-            {/* Header & close */}
-            <div className="flex items-start justify-between border-b border-border pb-3">
+          <div className="space-y-5">
+            {/* Header & Close */}
+            <div className="flex items-start justify-between border-b border-border pb-4">
               <div>
-                <div className="flex items-center gap-2 mb-1">
+                <div className="flex items-center gap-2 mb-1.5">
                   <span className={getSeverityBadge(selectedAlert.priority).className}>
                     {getSeverityBadge(selectedAlert.priority).label}
                   </span>
-                  <span className="font-mono text-[11px] text-muted-foreground">#{selectedAlert.id}</span>
+                  <span className="font-mono text-[12px] font-semibold text-text-tertiary">#{selectedAlert.id}</span>
                 </div>
-                <h3 className="text-sm font-semibold text-foreground leading-tight">
+                <h3 className="text-[16px] font-semibold text-foreground leading-tight">
                   {selectedAlert.title || selectedAlert.rules.join(", ") || "Incident"}
                 </h3>
               </div>
               <button
                 type="button"
                 onClick={() => onSelectAlert(null)}
-                className="p-1 rounded text-muted-foreground hover:text-foreground hover:bg-muted"
+                className="p-1.5 rounded-[6px] text-text-tertiary hover:text-foreground hover:bg-surface-elevated transition"
                 title="Close detail panel"
               >
                 <X className="w-4 h-4" />
@@ -342,9 +350,11 @@ export function AlertsView({
             </div>
 
             {/* Plain language explanation */}
-            <div className="space-y-1.5">
-              <h4 className="text-[11px] font-medium text-muted-foreground">Explanation</h4>
-              <p className="text-xs text-foreground leading-relaxed bg-muted/30 p-2.5 rounded-[4px] border border-border">
+            <div className="space-y-2">
+              <h4 className="text-[12px] font-semibold uppercase tracking-[0.04em] text-text-tertiary">
+                Incident Summary & Heuristic
+              </h4>
+              <p className="text-[13px] text-foreground leading-relaxed bg-surface-elevated p-3.5 rounded-[8px] border border-border">
                 {selectedAlert.signals?.explanation ||
                   selectedAlert.summary ||
                   "Subject exhibited behavior triggering multiple vision signals without final checkout resolution."}
@@ -352,21 +362,23 @@ export function AlertsView({
             </div>
 
             {/* Context details */}
-            <div className="grid grid-cols-2 gap-2 text-xs">
-              <div className="p-2 rounded-[4px] border border-border bg-muted/20">
-                <span className="text-[10px] text-muted-foreground block">Location</span>
-                <span className="font-medium text-foreground">{selectedAlert.zone || "Sales Floor"}</span>
+            <div className="grid grid-cols-2 gap-2.5 text-[13px]">
+              <div className="p-3 rounded-[8px] border border-border bg-surface-elevated">
+                <span className="text-[11px] text-text-tertiary block font-medium">Location Zone</span>
+                <span className="font-semibold text-foreground">{selectedAlert.zone || "Sales Floor"}</span>
               </div>
-              <div className="p-2 rounded-[4px] border border-border bg-muted/20">
-                <span className="text-[10px] text-muted-foreground block">Camera</span>
-                <span className="font-medium text-foreground">{selectedAlert.camera || "CAM-04"}</span>
+              <div className="p-3 rounded-[8px] border border-border bg-surface-elevated">
+                <span className="text-[11px] text-text-tertiary block font-medium">Camera Node</span>
+                <span className="font-semibold text-foreground">{selectedAlert.camera || "CAM-04"}</span>
               </div>
             </div>
 
-            {/* Signals confidence breakdown */}
-            <div className="space-y-1.5">
-              <h4 className="text-[11px] font-medium text-muted-foreground">Signal confidence</h4>
-              <div className="space-y-1.5 border border-border rounded-[4px] p-2 bg-muted/10 text-xs">
+            {/* Signal confidence breakdown */}
+            <div className="space-y-2">
+              <h4 className="text-[12px] font-semibold uppercase tracking-[0.04em] text-text-tertiary">
+                Signal Confidence Breakdown
+              </h4>
+              <div className="space-y-2 border border-border rounded-[8px] p-3 bg-surface-elevated text-[13px]">
                 {(
                   selectedAlert.signals?.rules ||
                   selectedAlert.rules.map((r) => ({
@@ -374,11 +386,11 @@ export function AlertsView({
                     confidence: selectedAlert.confidence,
                   }))
                 ).map((r, idx) => (
-                  <div key={idx} className="flex items-center justify-between text-xs">
-                    <span className="text-foreground truncate max-w-[180px]">
+                  <div key={idx} className="flex items-center justify-between text-[13px]">
+                    <span className="text-foreground truncate max-w-[200px] font-medium">
                       {r.rule_name || "Detection heuristic"}
                     </span>
-                    <span className="font-mono text-muted-foreground tabular-nums">
+                    <span className="font-mono font-medium text-text-secondary tabular-nums">
                       {Math.round((r.confidence || selectedAlert.confidence) * 100)}%
                     </span>
                   </div>
@@ -387,37 +399,39 @@ export function AlertsView({
             </div>
 
             {/* Evidence clip preview */}
-            <div className="space-y-1.5">
-              <h4 className="text-[11px] font-medium text-muted-foreground">Evidence preview</h4>
-              <div className="aspect-video rounded-[4px] border border-border bg-zinc-900 flex items-center justify-center relative overflow-hidden text-xs text-zinc-400">
-                <div className="absolute inset-8 border border-cyan-400/80 bg-cyan-400/5 rounded-sm flex items-start p-1">
-                  <span className="text-[9px] font-mono font-medium text-cyan-300 bg-black/80 px-1 rounded">
+            <div className="space-y-2">
+              <h4 className="text-[12px] font-semibold uppercase tracking-[0.04em] text-text-tertiary">
+                Evidence Clip Preview
+              </h4>
+              <div className="aspect-video rounded-[8px] border border-border bg-zinc-950 flex items-center justify-center relative overflow-hidden text-xs text-zinc-400 shadow-xs">
+                <div className="absolute inset-8 border border-cyan-400 bg-cyan-400/10 rounded-[4px] flex items-start p-1.5">
+                  <span className="text-[10px] font-mono font-semibold text-cyan-300 bg-black/80 px-1.5 py-0.5 rounded-[4px]">
                     Tracked Subject
                   </span>
                 </div>
-                <span className="text-[11px] font-mono text-zinc-500 z-10">
-                  CCTV Still · {selectedAlert.camera || "CAM-04"}
+                <span className="text-[12px] font-mono text-zinc-400 z-10">
+                  CCTV Snapshot · {selectedAlert.camera || "CAM-04"}
                 </span>
               </div>
             </div>
           </div>
 
           {/* Action Footer */}
-          <div className="pt-4 border-t border-border space-y-2 mt-4">
+          <div className="pt-4 border-t border-border space-y-3 mt-5">
             <input
               type="text"
               value={actionNote}
               onChange={(e) => setActionNote(e.target.value)}
-              placeholder="Add disposition note..."
-              className="w-full px-2.5 py-1.5 rounded-[4px] border border-border bg-background text-foreground text-xs focus:outline-none focus:border-foreground transition"
+              placeholder="Add review note..."
+              className="w-full px-3 py-2 rounded-[8px] border border-border bg-card text-foreground text-[13px] placeholder:text-text-tertiary focus:outline-none focus:ring-2 focus:ring-primary transition shadow-xs"
             />
 
-            <div className="grid grid-cols-3 gap-1.5">
+            <div className="grid grid-cols-3 gap-2">
               <button
                 type="button"
                 onClick={() => handleExecuteAction("resolve")}
                 disabled={submittingAction}
-                className="py-1.5 px-2 rounded-[4px] bg-foreground text-background text-xs font-medium hover:opacity-90 transition disabled:opacity-50"
+                className="py-2 px-2 rounded-[8px] bg-primary text-primary-foreground text-[13px] font-semibold hover:bg-primary-hover transition disabled:opacity-50 shadow-xs"
               >
                 Resolve
               </button>
@@ -425,15 +439,15 @@ export function AlertsView({
                 type="button"
                 onClick={() => handleExecuteAction("false_positive")}
                 disabled={submittingAction}
-                className="py-1.5 px-2 rounded-[4px] border border-border hover:bg-muted text-xs text-foreground transition disabled:opacity-50"
+                className="py-2 px-2 rounded-[8px] border border-border bg-surface-elevated hover:bg-muted text-[13px] text-foreground font-medium transition disabled:opacity-50"
               >
-                False alarm
+                False Alarm
               </button>
               <button
                 type="button"
                 onClick={() => handleExecuteAction("escalate")}
                 disabled={submittingAction}
-                className="py-1.5 px-2 rounded-[4px] border border-red-500/30 text-red-600 dark:text-red-400 hover:bg-red-500/10 text-xs font-medium transition disabled:opacity-50"
+                className="py-2 px-2 rounded-[8px] border border-red-500/30 text-red-600 dark:text-red-400 hover:bg-red-500/10 text-[13px] font-semibold transition disabled:opacity-50"
               >
                 Escalate
               </button>

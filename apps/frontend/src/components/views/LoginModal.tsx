@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { AlertCircle, Lock, User as UserIcon, Shield } from "lucide-react";
+import { AlertCircle, Lock, User as UserIcon, Shield, Sparkles } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
 import { analytics } from "../../lib/analytics";
 
@@ -73,10 +73,10 @@ export function LoginModal({ isOpen, onClose, onOpenPrivacy, onOpenTerms }: Logi
   };
 
   const demoAccounts = [
-    { username: "admin", label: "Admin", desc: "Full organization access" },
-    { username: "op1", label: "Operator", desc: "Live surveillance & alerts" },
+    { username: "admin", label: "Admin", desc: "Full org access" },
+    { username: "op1", label: "Operator", desc: "Surveillance & alerts" },
     { username: "manager", label: "Manager", desc: "Store queue & analytics" },
-    { username: "viewer", label: "Viewer", desc: "Read-only access" },
+    { username: "viewer", label: "Viewer", desc: "Read-only view" },
   ];
 
   return (
@@ -84,38 +84,33 @@ export function LoginModal({ isOpen, onClose, onOpenPrivacy, onOpenTerms }: Logi
       role="dialog"
       aria-modal="true"
       aria-labelledby="login-title"
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-background/80 backdrop-blur-sm animate-in fade-in duration-100"
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm animate-fade-up"
     >
-      <div className="relative w-full max-w-sm rounded-[6px] border border-border bg-card p-6 shadow-xl text-foreground">
-        {/* Clean Header */}
-        <div className="mb-5 space-y-1">
-          <div className="flex items-center gap-2 mb-2">
-            <div className="w-7 h-7 rounded-md bg-primary/10 text-primary flex items-center justify-center border border-primary/20">
-              <Shield className="w-4 h-4" />
-            </div>
-            <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-              SmartRetail AI
-            </span>
+      <div className="relative w-full max-w-md rounded-[12px] border border-border bg-card p-8 shadow-modal text-foreground">
+        {/* Header */}
+        <div className="mb-6 space-y-1.5 text-center flex flex-col items-center">
+          <div className="w-10 h-10 rounded-[10px] bg-primary/10 text-primary flex items-center justify-center border border-primary/20 mb-2 shadow-xs">
+            <Sparkles className="w-5 h-5" />
           </div>
-          <h2 id="login-title" className="text-base font-semibold tracking-tight text-foreground">
-            Sign In to Store Operations
+          <h2 id="login-title" className="text-[20px] font-semibold tracking-tight text-foreground">
+            Sign In to SmartRetail AI
           </h2>
-          <p className="text-xs text-muted-foreground">
-            Enter your operator credentials to access camera feeds and intelligence.
+          <p className="text-[14px] text-text-secondary">
+            Enterprise store operations, loss prevention & surveillance
           </p>
         </div>
 
         {error && (
           <div
             role="alert"
-            className="mb-4 p-2.5 rounded-[4px] bg-red-500/10 border border-red-500/20 text-xs text-red-600 dark:text-red-400 flex items-center gap-2"
+            className="mb-5 p-3 rounded-[8px] bg-destructive/10 border border-destructive/20 text-[13px] text-destructive flex items-center gap-2.5"
           >
             <AlertCircle className="w-4 h-4 shrink-0" />
             <span>{error}</span>
           </div>
         )}
 
-        <form onSubmit={handleSubmit} className="space-y-3">
+        <form onSubmit={handleSubmit} className="space-y-4">
           {/* Honeypot field (hidden from real users) */}
           <div className="hidden" aria-hidden="true">
             <label htmlFor="website">Website</label>
@@ -130,9 +125,9 @@ export function LoginModal({ isOpen, onClose, onOpenPrivacy, onOpenTerms }: Logi
             />
           </div>
 
-          <div className="space-y-1">
-            <label htmlFor="username" className="block text-xs font-medium text-foreground">
-              Username
+          <div className="space-y-1.5">
+            <label htmlFor="username" className="block text-[13px] font-medium text-foreground">
+              Operator Username
             </label>
             <input
               id="username"
@@ -140,14 +135,14 @@ export function LoginModal({ isOpen, onClose, onOpenPrivacy, onOpenTerms }: Logi
               required
               value={username}
               onChange={(e) => setUsername(e.target.value)}
-              className="w-full px-2.5 py-1.5 rounded-[4px] border border-border bg-background text-foreground text-xs placeholder:text-muted-foreground/60 focus:outline-none focus:border-primary transition"
+              className="w-full px-3.5 py-2 rounded-[8px] border border-border bg-card text-foreground text-[14px] placeholder:text-text-tertiary focus:outline-none focus:ring-2 focus:ring-primary shadow-xs transition"
               placeholder="e.g. admin, op1, manager"
             />
           </div>
 
-          <div className="space-y-1">
-            <label htmlFor="password-field" className="block text-xs font-medium text-foreground">
-              Password
+          <div className="space-y-1.5">
+            <label htmlFor="password-field" className="block text-[13px] font-medium text-foreground">
+              Security Password
             </label>
             <input
               id="password-field"
@@ -155,7 +150,7 @@ export function LoginModal({ isOpen, onClose, onOpenPrivacy, onOpenTerms }: Logi
               required
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full px-2.5 py-1.5 rounded-[4px] border border-border bg-background text-foreground text-xs placeholder:text-muted-foreground/60 focus:outline-none focus:border-primary transition"
+              className="w-full px-3.5 py-2 rounded-[8px] border border-border bg-card text-foreground text-[14px] placeholder:text-text-tertiary focus:outline-none focus:ring-2 focus:ring-primary shadow-xs transition"
               placeholder="••••••••"
             />
           </div>
@@ -163,33 +158,35 @@ export function LoginModal({ isOpen, onClose, onOpenPrivacy, onOpenTerms }: Logi
           <button
             type="submit"
             disabled={loading}
-            className="w-full py-2 px-3 rounded-[4px] bg-primary text-primary-foreground text-xs font-medium hover:bg-primary/90 transition shadow-sm disabled:opacity-50 mt-1"
+            className="w-full py-2.5 px-4 rounded-[8px] bg-primary text-primary-foreground text-[14px] font-semibold hover:bg-primary-hover active:bg-indigo-800 transition-all duration-150 shadow-xs disabled:opacity-50 mt-2"
           >
-            {loading ? "Authenticating..." : "Sign In"}
+            {loading ? "Authenticating Session..." : "Sign In to Console"}
           </button>
         </form>
 
         {/* Demo Accounts */}
-        <div className="mt-5 pt-4 border-t border-border space-y-2">
-          <div className="text-[11px] font-medium text-muted-foreground">Demo Accounts (One-Click)</div>
-          <div className="grid grid-cols-2 gap-1.5">
+        <div className="mt-6 pt-5 border-t border-border space-y-2.5">
+          <div className="text-[12px] font-semibold text-text-tertiary uppercase tracking-[0.04em]">
+            Demo Roles (Instant Access)
+          </div>
+          <div className="grid grid-cols-2 gap-2">
             {demoAccounts.map((acc) => (
               <button
                 key={acc.username}
                 type="button"
                 onClick={() => handleQuickLogin(acc.username)}
                 disabled={loading}
-                className="text-left p-1.5 rounded-[4px] border border-border hover:bg-muted text-[11px] transition text-muted-foreground hover:text-foreground disabled:opacity-50"
+                className="text-left p-2.5 rounded-[8px] border border-border bg-surface-elevated hover:bg-muted hover:border-primary/30 text-[12px] transition text-text-secondary hover:text-foreground disabled:opacity-50 shadow-xs"
               >
-                <div className="font-semibold text-foreground">{acc.label}</div>
-                <div className="text-[10px] text-muted-foreground truncate">{acc.desc}</div>
+                <div className="font-semibold text-foreground text-[13px]">{acc.label}</div>
+                <div className="text-[11px] text-text-tertiary truncate">{acc.desc}</div>
               </button>
             ))}
           </div>
         </div>
 
         {/* Footer Links */}
-        <div className="mt-4 text-center text-[11px] text-muted-foreground flex items-center justify-center gap-3">
+        <div className="mt-5 text-center text-[12px] text-text-tertiary flex items-center justify-center gap-4">
           {onOpenPrivacy && (
             <button
               type="button"

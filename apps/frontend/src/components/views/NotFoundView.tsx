@@ -2,26 +2,32 @@ import React from "react";
 import { ViewTab } from "../../types";
 
 interface NotFoundViewProps {
-  onNavigate: (tab: ViewTab) => void;
+  onNavigate?: (tab: ViewTab) => void;
+  onBack?: () => void;
 }
 
-export function NotFoundView({ onNavigate }: NotFoundViewProps) {
+export function NotFoundView({ onNavigate, onBack }: NotFoundViewProps) {
+  const handleClick = () => {
+    if (onBack) onBack();
+    else if (onNavigate) onNavigate("overview");
+  };
+
   return (
-    <div className="max-w-md mx-auto py-16 text-center space-y-4">
-      <div className="font-mono text-2xl font-semibold text-muted-foreground">404</div>
-      <div className="space-y-1">
-        <h1 className="text-base font-semibold text-foreground">Page not found</h1>
-        <p className="text-xs text-muted-foreground">
-          The page or camera view you requested does not exist.
+    <div className="max-w-md mx-auto py-20 text-center space-y-4 animate-fade-up">
+      <div className="font-mono text-4xl font-bold text-text-tertiary">404</div>
+      <div className="space-y-1.5">
+        <h1 className="text-[18px] font-semibold text-foreground tracking-tight">View Not Found</h1>
+        <p className="text-[14px] text-text-secondary">
+          The requested store view, camera node, or dashboard module does not exist.
         </p>
       </div>
 
-      <div className="pt-2">
+      <div className="pt-3">
         <button
-          onClick={() => onNavigate("overview")}
-          className="px-3 py-1.5 rounded-[4px] bg-foreground text-background text-xs font-medium hover:opacity-90 transition"
+          onClick={handleClick}
+          className="px-4 py-2 rounded-[8px] bg-primary text-primary-foreground text-[14px] font-semibold hover:bg-primary-hover transition shadow-xs"
         >
-          Return to overview
+          Return to Overview
         </button>
       </div>
     </div>

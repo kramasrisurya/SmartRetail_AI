@@ -15,6 +15,7 @@ export default {
         foreground: "hsl(var(--foreground))",
         primary: {
           DEFAULT: "hsl(var(--primary))",
+          hover: "hsl(var(--primary-hover))",
           foreground: "hsl(var(--primary-foreground))",
         },
         secondary: {
@@ -41,20 +42,42 @@ export default {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))",
         },
+        surface: {
+          DEFAULT: "hsl(var(--card))",
+          elevated: "hsl(var(--surface-elevated))",
+        },
+        text: {
+          primary: "hsl(var(--foreground))",
+          secondary: "hsl(var(--muted-foreground))",
+          tertiary: "hsl(var(--text-tertiary))",
+        },
         status: {
-          ok: "#10b981",
-          warning: "#f59e0b",
-          critical: "#ef4444",
-          info: "#3b82f6",
+          ok: "hsl(var(--success))",
+          warning: "hsl(var(--warning))",
+          critical: "hsl(var(--destructive))",
+          info: "hsl(var(--info))",
         }
       },
       borderRadius: {
-        lg: "var(--radius)",
-        md: "calc(var(--radius) - 2px)",
-        sm: "calc(var(--radius) - 4px)",
+        DEFAULT: "10px",
+        lg: "10px",
+        md: "8px",
+        sm: "6px",
+        card: "10px",
+        button: "8px",
+        badge: "6px",
+        input: "8px",
+      },
+      boxShadow: {
+        xs: "0 1px 2px rgba(0, 0, 0, 0.04)",
+        card: "0 1px 2px rgba(0, 0, 0, 0.04)",
+        "card-hover": "0 4px 12px rgba(0, 0, 0, 0.08)",
+        popover: "0 8px 24px rgba(0, 0, 0, 0.12)",
+        modal: "0 16px 36px rgba(0, 0, 0, 0.16)",
       },
       fontFamily: {
         sans: ["Inter", "-apple-system", "BlinkMacSystemFont", "Segoe UI", "Roboto", "sans-serif"],
+        mono: ["JetBrains Mono", "SFMono-Regular", "Menlo", "Monaco", "Consolas", "monospace"],
       },
     },
   },

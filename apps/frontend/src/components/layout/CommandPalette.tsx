@@ -15,6 +15,7 @@ import {
   Settings,
   X,
   FileText,
+  CornerDownLeft,
 } from "lucide-react";
 import { ViewTab } from "../../types";
 import { cn } from "../../lib/utils";
@@ -100,33 +101,35 @@ export function CommandPalette({ isOpen, onClose, onSelectTab }: CommandPaletteP
       role="dialog"
       aria-modal="true"
       aria-label="Command Palette"
-      className="fixed inset-0 z-50 flex items-start justify-center pt-20 px-4 bg-background/80 backdrop-blur-sm animate-in fade-in duration-100"
+      className="fixed inset-0 z-50 flex items-start justify-center pt-24 px-4 bg-black/40 backdrop-blur-sm animate-fade-up"
     >
       <div className="fixed inset-0" onClick={onClose} aria-hidden="true" />
-      <div className="relative w-full max-w-lg rounded-lg border border-border bg-popover shadow-2xl overflow-hidden z-10 animate-in zoom-in-95 duration-100">
-        <div className="flex items-center px-3 py-2.5 border-b border-border">
-          <Search className="w-4 h-4 text-muted-foreground mr-2.5" />
+      <div className="relative w-full max-w-lg rounded-[12px] border border-border bg-card shadow-modal overflow-hidden z-10">
+        {/* Search Input Bar */}
+        <div className="flex items-center px-4 py-3.5 border-b border-border">
+          <Search className="w-5 h-5 text-text-tertiary mr-3" />
           <input
             ref={inputRef}
             type="text"
-            placeholder="Search views, entities, or commands (↑↓ to navigate, ↵ to select)..."
+            placeholder="Search views, telemetry, or commands..."
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            className="flex-1 bg-transparent text-xs text-foreground placeholder:text-muted-foreground focus:outline-none"
+            className="flex-1 bg-transparent text-[16px] text-foreground placeholder:text-text-tertiary focus:outline-none"
           />
           <button
             type="button"
             onClick={onClose}
             aria-label="Close command palette"
-            className="p-1 rounded text-muted-foreground hover:text-foreground"
+            className="p-1 rounded-[6px] text-text-tertiary hover:text-foreground hover:bg-surface-elevated transition"
           >
-            <X className="w-3.5 h-3.5" />
+            <X className="w-4 h-4" />
           </button>
         </div>
 
-        <div className="max-h-80 overflow-y-auto p-1.5" role="listbox">
+        {/* Results List */}
+        <div className="max-h-88 overflow-y-auto p-2" role="listbox">
           {filtered.length > 0 ? (
-            <div className="space-y-0.5">
+            <div className="space-y-1">
               {filtered.map((item, idx) => {
                 const Icon = item.icon;
                 const isSelected = idx === selectedIndex;
@@ -142,31 +145,44 @@ export function CommandPalette({ isOpen, onClose, onSelectTab }: CommandPaletteP
                     }}
                     onMouseEnter={() => setSelectedIndex(idx)}
                     className={cn(
-                      "w-full flex items-center justify-between px-2.5 py-2 rounded-md text-xs transition text-left focus-visible:outline-none",
-                      isSelected ? "bg-primary text-primary-foreground font-medium" : "text-foreground hover:bg-muted/70"
+                      "w-full flex items-center justify-between px-3 py-2.5 rounded-[8px] text-[14px] transition text-left focus-visible:outline-none font-medium",
+                      isSelected ? "bg-primary text-primary-foreground" : "text-foreground hover:bg-surface-elevated"
                     )}
                   >
-                    <div className="flex items-center gap-2.5">
+                    <div className="flex items-center gap-3">
                       <Icon className="w-4 h-4 shrink-0" />
                       <span>{item.label}</span>
                     </div>
-                    <span
-                      className={cn(
-                        "text-[10px] font-mono px-1.5 py-0.5 rounded",
-                        isSelected ? "bg-white/20 text-white" : "bg-muted text-muted-foreground"
-                      )}
-                    >
-                      {item.category}
-                    </span>
+                    <div className="flex items-center gap-2">
+                      <span
+                        className={cn(
+                          "text-[11px] font-mono px-2 py-0.5 rounded-[4px]",
+                          isSelected ? "bg-white/20 text-white" : "bg-surface-elevated text-text-tertiary border border-border"
+                        )}
+                      >
+                        {item.category}
+                      </span>
+                      {isSelected && <CornerDownLeft className="w-3.5 h-3.5 opacity-80" />}
+                    </div>
                   </button>
                 );
               })}
             </div>
           ) : (
-            <div className="py-8 text-center text-xs text-muted-foreground">
+            <div className="py-10 text-center text-[14px] text-text-secondary">
               No matching views or commands found for &ldquo;{query}&rdquo;
             </div>
           )}
+        </div>
+
+        {/* Footer Navigation Hints */}
+        <div className="px-4 py-2 border-t border-border bg-surface-elevated/50 flex items-center justify-between text-[11px] text-text-tertiary">
+          <div className="flex items-center gap-3">
+            <span><kbd className="font-mono bg-card px-1 py-0.5 rounded border border-border">↑↓</kbd> Navigate</span>
+            <span><kbd className="font-mono bg-card px-1 py-0.5 rounded border border-border">↵</kbd> Select</span>
+            <span><kbd className="font-mono bg-card px-1 py-0.5 rounded border border-border">esc</kbd> Dismiss</span>
+          </div>
+          <span>SmartRetail AI</span>
         </div>
       </div>
     </div>

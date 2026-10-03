@@ -1,7 +1,6 @@
 import React, { useState, useMemo, useCallback } from "react";
 import {
   X,
-  Sliders,
   Camera as CameraIcon,
   Video,
   Layers,
@@ -9,6 +8,7 @@ import {
   EyeOff,
   User,
   Activity,
+  Sparkles,
 } from "lucide-react";
 import { Camera, HeatmapCell, Zone, EventItem } from "../../types";
 import { cn, formatTimeAgo, getStatusDot } from "../../lib/utils";
@@ -52,7 +52,7 @@ export function StoreMapView({
 
   // Calculate FOV cone polygon coordinates for SVG
   const getFovCone = useCallback(
-    (cx: number, cy: number, facingDeg: number = 0, fovDeg: number = 70, length: number = 18) => {
+    (cx: number, cy: number, facingDeg: number = 0, fovDeg: number = 70, length: number = 20) => {
       const angle1 = ((facingDeg - fovDeg / 2 - 90) * Math.PI) / 180;
       const angle2 = ((facingDeg + fovDeg / 2 - 90) * Math.PI) / 180;
       const x1 = cx + length * Math.cos(angle1);
@@ -79,27 +79,29 @@ export function StoreMapView({
   }, []);
 
   return (
-    <div className="space-y-4 animate-in fade-in duration-150">
+    <div className="space-y-5 animate-fade-up max-w-7xl mx-auto">
       {/* Top Header & Map Controls */}
-      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border pb-3">
+      <div className="flex flex-wrap items-center justify-between gap-4 border-b border-border pb-4">
         <div>
-          <h1 className="text-base font-semibold text-foreground tracking-tight">Floor Plan & Spatial Map</h1>
-          <p className="text-xs text-muted-foreground tabular-nums">
-            {zones.length} zones · {cameras.length} cameras · 12 live shoppers
+          <h1 className="text-[20px] font-semibold text-foreground tracking-tight">
+            Floor Plan & Spatial Heatmap
+          </h1>
+          <p className="text-[14px] text-text-secondary">
+            {zones.length} monitored retail zones · {cameras.length} camera viewpoints · 12 live shoppers
           </p>
         </div>
 
-        <div className="flex flex-wrap items-center gap-2 text-xs">
+        <div className="flex flex-wrap items-center gap-3 text-[13px]">
           {/* Time range selector */}
-          <div className="flex items-center rounded-[4px] border border-border bg-background p-0.5" role="group" aria-label="Time range">
+          <div className="inline-flex rounded-[8px] border border-border bg-surface-elevated p-0.5 shadow-xs" role="group" aria-label="Time horizon">
             {(["15m", "1h", "24h"] as const).map((r) => (
               <button
                 key={r}
                 type="button"
                 onClick={() => setTimeRange(r)}
                 className={cn(
-                  "px-2 py-0.5 rounded-[3px] text-xs transition",
-                  timeRange === r ? "bg-muted font-medium text-foreground" : "text-muted-foreground hover:text-foreground"
+                  "px-3 py-1 rounded-[6px] text-[13px] font-medium transition",
+                  timeRange === r ? "bg-card font-semibold text-foreground shadow-xs" : "text-text-tertiary hover:text-foreground"
                 )}
               >
                 {r}
@@ -108,15 +110,15 @@ export function StoreMapView({
           </div>
 
           {/* Heatmap toggle and slider */}
-          <div className="flex items-center gap-1.5 px-2 py-1 rounded-[4px] border border-border bg-background">
-            <label className="flex items-center gap-1 cursor-pointer select-none">
+          <div className="flex items-center gap-2 px-3 py-1.5 rounded-[8px] border border-border bg-card shadow-xs">
+            <label className="flex items-center gap-1.5 cursor-pointer select-none">
               <input
                 type="checkbox"
                 checked={showHeatmap}
                 onChange={(e) => setShowHeatmap(e.target.checked)}
-                className="rounded-[3px] border-border text-primary focus:ring-0"
+                className="rounded-[4px] border-border text-primary focus:ring-0"
               />
-              <span className="text-muted-foreground">Heatmap</span>
+              <span className="text-text-secondary font-medium">Heatmap</span>
             </label>
             {showHeatmap && (
               <input
@@ -125,8 +127,8 @@ export function StoreMapView({
                 max="100"
                 value={heatmapIntensity}
                 onChange={(e) => setHeatmapIntensity(Number(e.target.value))}
-                className="w-16 h-1 bg-muted rounded-lg appearance-none cursor-pointer accent-primary"
-                aria-label="Heatmap intensity"
+                className="w-20 h-1.5 bg-surface-elevated rounded-lg appearance-none cursor-pointer accent-primary"
+                aria-label="Heatmap intensity slider"
               />
             )}
           </div>
@@ -136,20 +138,20 @@ export function StoreMapView({
             type="button"
             onClick={() => setShowFovCones(!showFovCones)}
             className={cn(
-              "px-2 py-1 rounded-[4px] border border-border text-xs transition flex items-center gap-1",
-              showFovCones ? "bg-muted text-foreground font-medium" : "bg-background text-muted-foreground hover:text-foreground"
+              "px-3 py-1.5 rounded-[8px] border border-border text-[13px] font-medium transition shadow-xs flex items-center gap-1.5",
+              showFovCones ? "bg-surface-elevated text-foreground" : "bg-card text-text-secondary hover:text-foreground"
             )}
           >
-            {showFovCones ? <Eye className="w-3.5 h-3.5" /> : <EyeOff className="w-3.5 h-3.5" />}
+            {showFovCones ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
             <span>FOV Cones</span>
           </button>
         </div>
       </div>
 
       {/* Main Area: SVG Floorplan Canvas + Side Context Drawer */}
-      <div className="flex flex-col lg:flex-row gap-4 min-h-[520px]">
-        {/* SVG Floorplan Canvas */}
-        <div className="flex-1 rounded-lg border border-border bg-card/60 p-4 relative overflow-hidden flex flex-col items-center justify-center min-h-[480px]">
+      <div className="flex flex-col lg:flex-row gap-5 min-h-[560px]">
+        {/* SVG Floorplan Canvas Card */}
+        <div className="flex-1 rounded-[10px] border border-border bg-card p-6 relative overflow-hidden flex flex-col items-center justify-center min-h-[500px] shadow-card">
           <div className="w-full max-w-2xl aspect-[100/150] relative">
             <svg
               viewBox="0 0 100 150"
@@ -168,7 +170,7 @@ export function StoreMapView({
                 className="text-border"
               />
 
-              {/* Zones Layer */}
+              {/* Zones Layer: 8% opacity primary fill with 1px stroke */}
               {zones.map((zone) => {
                 const isSelected = selectedZone?.id === zone.id;
                 return (
@@ -183,10 +185,10 @@ export function StoreMapView({
                     <polygon
                       points={formatPolygon(zone.polygon)}
                       className={cn(
-                        "transition-all duration-150 stroke-1",
+                        "transition-all duration-200 stroke-1",
                         isSelected
                           ? "fill-primary/20 stroke-primary stroke-[1.5]"
-                          : "fill-muted/30 stroke-border hover:fill-muted/50 hover:stroke-primary/50"
+                          : "fill-primary/[0.06] stroke-border/80 hover:fill-primary/[0.12] hover:stroke-primary/50"
                       )}
                     />
                     {zone.polygon[0] && (
@@ -195,7 +197,7 @@ export function StoreMapView({
                         y={(zone.polygon[0].y + zone.polygon[2]?.y) / 2 || zone.polygon[0].y + 8}
                         textAnchor="middle"
                         dominantBaseline="middle"
-                        className="text-[3px] font-sans font-medium fill-muted-foreground group-hover:fill-foreground pointer-events-none transition-colors"
+                        className="text-[3.2px] font-sans font-semibold fill-text-secondary group-hover:fill-foreground pointer-events-none transition-colors"
                       >
                         {zone.name}
                       </text>
@@ -204,21 +206,21 @@ export function StoreMapView({
                 );
               })}
 
-              {/* Heatmap Dwell Intensity Overlay */}
+              {/* Heatmap Dwell Intensity Overlay with Radial Gradients & Blur */}
               {showHeatmap &&
                 heatmapCells.map((cell, idx) => (
                   <circle
                     key={idx}
                     cx={cell.x}
                     cy={cell.y}
-                    r={6 + cell.intensity * 8}
-                    fill={cell.intensity > 0.6 ? "#ef4444" : cell.intensity > 0.3 ? "#f59e0b" : "#3b82f6"}
+                    r={7 + cell.intensity * 9}
+                    fill={cell.intensity > 0.6 ? "#dc2626" : cell.intensity > 0.3 ? "#d97706" : "#2563eb"}
                     opacity={(cell.intensity * heatmapIntensity) / 140}
-                    className="pointer-events-none blur-[2px] transition-opacity"
+                    className="pointer-events-none blur-[3px] transition-opacity duration-300"
                   />
                 ))}
 
-              {/* Camera FOV Cones */}
+              {/* Camera FOV Cones: 5% opacity fill with dashed stroke */}
               {showFovCones &&
                 cameras.map((cam) => {
                   if (cam.map_x === null || cam.map_y === null) return null;
@@ -228,24 +230,25 @@ export function StoreMapView({
                   return (
                     <polygon
                       key={`cone-${cam.id}`}
-                      points={getFovCone(cam.map_x, cam.map_y, cam.facing || 0, cam.fov || 65, 20)}
+                      points={getFovCone(cam.map_x, cam.map_y, cam.facing || 0, cam.fov || 65, 22)}
+                      strokeDasharray="1 1"
                       className={cn(
                         "pointer-events-none transition-all duration-150",
                         isSelected
-                          ? "fill-primary/25 stroke-primary/60 stroke-[0.5]"
+                          ? "fill-primary/20 stroke-primary stroke-[0.6]"
                           : isHovered
-                          ? "fill-cyan-500/20 stroke-cyan-400/50 stroke-[0.5]"
-                          : "fill-cyan-500/8 stroke-cyan-500/20 stroke-[0.2]"
+                          ? "fill-cyan-500/15 stroke-cyan-400 stroke-[0.5]"
+                          : "fill-cyan-500/[0.05] stroke-cyan-500/30 stroke-[0.3]"
                       )}
                     />
                   );
                 })}
 
-              {/* Live Shopper Dots */}
+              {/* Live Shopper Dots: 6px circles with 2px white ring and pulse */}
               {customerDots.map((dot) => (
                 <g key={dot.id} className="pointer-events-none">
-                  <circle cx={dot.x} cy={dot.y} r="2" className="fill-emerald-400 animate-pulse" />
-                  <circle cx={dot.x} cy={dot.y} r="0.9" className="fill-white" />
+                  <circle cx={dot.x} cy={dot.y} r="2.4" className="fill-emerald-400 animate-pulse-dot" />
+                  <circle cx={dot.x} cy={dot.y} r="1" className="fill-white stroke-emerald-600 stroke-[0.3]" />
                 </g>
               ))}
 
@@ -270,16 +273,16 @@ export function StoreMapView({
                     className="cursor-pointer"
                   >
                     <circle
-                      r={isSelected ? "3.2" : isHovered ? "2.8" : "2.2"}
+                      r={isSelected ? "3.6" : isHovered ? "3.0" : "2.4"}
                       className={cn(
                         "transition-all duration-150",
                         isSelected
-                          ? "fill-primary stroke-background stroke-[0.8]"
-                          : "fill-card stroke-border stroke-[0.6] hover:fill-muted"
+                          ? "fill-primary stroke-background stroke-[1]"
+                          : "fill-card stroke-border stroke-[0.8] hover:fill-surface-elevated"
                       )}
                     />
                     <circle
-                      r="1"
+                      r="1.2"
                       className={status.dotClass}
                     />
                   </g>
@@ -293,16 +296,16 @@ export function StoreMapView({
         {(selectedCamera || selectedZone) && (
           <aside
             role="region"
-            aria-label="Map Selection Details"
-            className="w-full lg:w-80 rounded-lg border border-border bg-card p-4 flex flex-col justify-between space-y-4 animate-in slide-in-from-right-4 duration-150"
+            aria-label="Spatial Selection Details"
+            className="w-full lg:w-88 rounded-[10px] border border-border bg-card p-5 flex flex-col justify-between space-y-4 shadow-card animate-slide-in-right"
           >
-            <div className="space-y-3">
-              <div className="flex items-start justify-between border-b border-border pb-2.5">
+            <div className="space-y-4">
+              <div className="flex items-start justify-between border-b border-border pb-3">
                 <div>
-                  <span className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold">
+                  <span className="text-[11px] text-text-tertiary uppercase tracking-[0.04em] font-semibold">
                     {selectedCamera ? "Camera Node" : "Store Zone"}
                   </span>
-                  <h3 className="text-sm font-semibold text-foreground">
+                  <h3 className="text-[16px] font-semibold text-foreground tracking-tight">
                     {selectedCamera ? selectedCamera.name : selectedZone?.name}
                   </h3>
                 </div>
@@ -312,50 +315,50 @@ export function StoreMapView({
                     onSelectCamera(null);
                     setSelectedZone(null);
                   }}
-                  className="p-1 rounded text-muted-foreground hover:text-foreground hover:bg-muted"
+                  className="p-1 rounded-[6px] text-text-tertiary hover:text-foreground hover:bg-surface-elevated transition"
                 >
                   <X className="w-4 h-4" />
                 </button>
               </div>
 
               {selectedCamera && (
-                <div className="space-y-2 text-xs">
-                  <div className="grid grid-cols-2 gap-2">
-                    <div className="p-2 rounded bg-muted/20 border border-border">
-                      <span className="text-[10px] text-muted-foreground block">Status</span>
-                      <span className="font-medium text-foreground capitalize">{selectedCamera.status}</span>
+                <div className="space-y-2.5 text-[13px]">
+                  <div className="grid grid-cols-2 gap-2.5">
+                    <div className="p-2.5 rounded-[8px] bg-surface-elevated border border-border">
+                      <span className="text-[11px] text-text-tertiary block font-medium">Status</span>
+                      <span className="font-semibold text-foreground capitalize">{selectedCamera.status}</span>
                     </div>
-                    <div className="p-2 rounded bg-muted/20 border border-border">
-                      <span className="text-[10px] text-muted-foreground block">Frame Rate</span>
-                      <span className="font-medium text-foreground">{selectedCamera.fps || 15} FPS</span>
+                    <div className="p-2.5 rounded-[8px] bg-surface-elevated border border-border">
+                      <span className="text-[11px] text-text-tertiary block font-medium">Target FPS</span>
+                      <span className="font-semibold text-foreground">{selectedCamera.fps || 15} FPS</span>
                     </div>
                   </div>
-                  <div className="p-2 rounded bg-muted/20 border border-border">
-                    <span className="text-[10px] text-muted-foreground block">Latency & Health</span>
-                    <span className="font-mono text-foreground">{selectedCamera.latency_ms || 28} ms</span>
+                  <div className="p-2.5 rounded-[8px] bg-surface-elevated border border-border">
+                    <span className="text-[11px] text-text-tertiary block font-medium">Telemetry Latency</span>
+                    <span className="font-mono font-medium text-foreground">{selectedCamera.latency_ms || 28} ms</span>
                   </div>
                 </div>
               )}
 
-              {/* Real-time Zone / Camera Events */}
-              <div className="space-y-2">
-                <h4 className="text-xs font-semibold text-foreground flex items-center gap-1.5">
-                  <Activity className="w-3.5 h-3.5 text-primary" />
-                  Recent Activity Stream
+              {/* Real-time Zone / Camera Events Stream */}
+              <div className="space-y-2.5">
+                <h4 className="text-[13px] font-semibold text-foreground flex items-center gap-2">
+                  <Activity className="w-4 h-4 text-primary" />
+                  <span>Recent Spatial Events</span>
                 </h4>
 
-                <div className="space-y-1.5 max-h-56 overflow-y-auto pr-1">
+                <div className="space-y-2 max-h-60 overflow-y-auto pr-1">
                   {activeEvents.length === 0 ? (
-                    <div className="py-4 text-center text-xs text-muted-foreground border border-dashed border-border rounded">
-                      No active events in this zone.
+                    <div className="py-6 text-center text-[13px] text-text-tertiary border border-dashed border-border rounded-[8px]">
+                      No active events recorded in this zone.
                     </div>
                   ) : (
-                    activeEvents.slice(0, 5).map((ev) => (
-                      <div key={ev.id} className="p-2 rounded border border-border bg-background text-xs">
+                    activeEvents.slice(0, 6).map((ev) => (
+                      <div key={ev.id} className="p-2.5 rounded-[8px] border border-border bg-surface-elevated text-[13px]">
                         <div className="font-medium text-foreground capitalize">
                           {ev.event_type.replace(/_/g, " ")}
                         </div>
-                        <div className="text-[10px] text-muted-foreground tabular-nums">
+                        <div className="text-[11px] text-text-tertiary tabular-nums mt-0.5">
                           {formatTimeAgo(ev.event_timestamp)}
                         </div>
                       </div>

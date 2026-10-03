@@ -9,6 +9,7 @@ import {
   Maximize2,
   Video,
   Radio,
+  Sparkles,
 } from "lucide-react";
 import { Camera, Alert, Zone } from "../../types";
 import { cn, getStatusDot } from "../../lib/utils";
@@ -23,7 +24,6 @@ interface CamerasViewProps {
 export function CamerasView({ cameras, alerts = [] }: CamerasViewProps) {
   const [gridLayout, setGridLayout] = useState<1 | 4 | 6>(4);
   const [isPlaying, setIsPlaying] = useState(true);
-  const [isRecording, setIsRecording] = useState(false);
   const [selectedSlot, setSelectedSlot] = useState<number>(0);
   const [currentTimeStr, setCurrentTimeStr] = useState<string>("00:00:00");
   const [showAiBoxes, setShowAiBoxes] = useState(true);
@@ -85,37 +85,37 @@ export function CamerasView({ cameras, alerts = [] }: CamerasViewProps) {
   }, [slotCameras, gridLayout]);
 
   return (
-    <div className="flex flex-col h-[calc(100vh-6rem)] overflow-hidden space-y-3">
+    <div className="flex flex-col h-[calc(100vh-7rem)] overflow-hidden space-y-4 animate-fade-up max-w-7xl mx-auto">
       {/* Top Header Bar */}
-      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border pb-3">
+      <div className="flex flex-wrap items-center justify-between gap-4 border-b border-border pb-4">
         <div>
-          <h1 className="text-base font-semibold text-foreground tracking-tight">Live Cameras</h1>
-          <p className="text-xs text-muted-foreground tabular-nums">
-            {cameras.length} connected feeds · 1080p stream governor active
+          <h1 className="text-[20px] font-semibold text-foreground tracking-tight">Live Camera Governors</h1>
+          <p className="text-[14px] text-text-secondary">
+            {cameras.length} active edge video streams · H.264 / 1080p telemetry governor
           </p>
         </div>
 
         {/* Global Controls */}
-        <div className="flex items-center gap-2 text-xs">
-          <label className="flex items-center gap-1.5 px-2 py-1 rounded-[4px] border border-border bg-background cursor-pointer select-none">
+        <div className="flex items-center gap-3 text-[13px]">
+          <label className="flex items-center gap-2 px-3 py-1.5 rounded-[8px] border border-border bg-card shadow-xs cursor-pointer select-none">
             <input
               type="checkbox"
               checked={showAiBoxes}
               onChange={(e) => setShowAiBoxes(e.target.checked)}
-              className="rounded-[3px] border-border text-primary focus:ring-0"
+              className="rounded-[4px] border-border text-primary focus:ring-0"
             />
-            <span className="text-muted-foreground">Detection Overlays</span>
+            <span className="text-text-secondary font-medium">Vision Overlays</span>
           </label>
 
-          {/* Grid Layout Switcher */}
-          <div className="inline-flex rounded-md border border-border p-0.5 bg-muted/30" role="group" aria-label="Camera grid layout">
+          {/* Grid Layout Switcher Segmented Control */}
+          <div className="inline-flex rounded-[8px] border border-border p-0.5 bg-surface-elevated shadow-xs" role="group" aria-label="Camera grid layout">
             <button
               type="button"
               onClick={() => setGridLayout(1)}
               aria-label="1 camera view"
               className={cn(
-                "px-2 py-1 rounded text-xs font-medium transition",
-                gridLayout === 1 ? "bg-background shadow-xs text-foreground" : "text-muted-foreground hover:text-foreground"
+                "px-3 py-1 rounded-[6px] text-[13px] font-medium transition",
+                gridLayout === 1 ? "bg-card shadow-xs text-foreground" : "text-text-tertiary hover:text-foreground"
               )}
             >
               1×1
@@ -125,8 +125,8 @@ export function CamerasView({ cameras, alerts = [] }: CamerasViewProps) {
               onClick={() => setGridLayout(4)}
               aria-label="4 cameras view"
               className={cn(
-                "px-2 py-1 rounded text-xs font-medium transition",
-                gridLayout === 4 ? "bg-background shadow-xs text-foreground" : "text-muted-foreground hover:text-foreground"
+                "px-3 py-1 rounded-[6px] text-[13px] font-medium transition",
+                gridLayout === 4 ? "bg-card shadow-xs text-foreground" : "text-text-tertiary hover:text-foreground"
               )}
             >
               2×2
@@ -136,8 +136,8 @@ export function CamerasView({ cameras, alerts = [] }: CamerasViewProps) {
               onClick={() => setGridLayout(6)}
               aria-label="6 cameras view"
               className={cn(
-                "px-2 py-1 rounded text-xs font-medium transition",
-                gridLayout === 6 ? "bg-background shadow-xs text-foreground" : "text-muted-foreground hover:text-foreground"
+                "px-3 py-1 rounded-[6px] text-[13px] font-medium transition",
+                gridLayout === 6 ? "bg-card shadow-xs text-foreground" : "text-text-tertiary hover:text-foreground"
               )}
             >
               3×2
@@ -148,17 +148,17 @@ export function CamerasView({ cameras, alerts = [] }: CamerasViewProps) {
             type="button"
             onClick={() => setIsPlaying(!isPlaying)}
             aria-label={isPlaying ? "Pause all feeds" : "Play all feeds"}
-            className="p-1.5 rounded border border-border bg-background hover:bg-muted text-foreground transition"
+            className="p-2 rounded-[8px] border border-border bg-card hover:bg-surface-elevated text-foreground transition shadow-xs"
           >
-            {isPlaying ? <Pause className="w-3.5 h-3.5" /> : <Play className="w-3.5 h-3.5" />}
+            {isPlaying ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
           </button>
         </div>
       </div>
 
-      {/* Camera Video Grid */}
+      {/* Camera Video Grid (16:9 Containers) */}
       <div
         className={cn(
-          "grid gap-3 flex-1 min-h-0 overflow-y-auto",
+          "grid gap-4 flex-1 min-h-0 overflow-y-auto pb-4",
           gridLayout === 1 && "grid-cols-1",
           gridLayout === 4 && "grid-cols-1 md:grid-cols-2",
           gridLayout === 6 && "grid-cols-1 md:grid-cols-2 lg:grid-cols-3"
@@ -174,10 +174,9 @@ export function CamerasView({ cameras, alerts = [] }: CamerasViewProps) {
               key={cam.id}
               onClick={() => setSelectedSlot(idx)}
               className={cn(
-                "relative rounded-lg border overflow-hidden bg-zinc-950 flex flex-col justify-between shadow-sm transition-all",
-                isSelected ? "border-primary ring-1 ring-primary/40" : "border-border hover:border-border/80"
+                "relative rounded-[10px] border overflow-hidden bg-zinc-950 flex flex-col justify-between shadow-card transition-all duration-200 aspect-video",
+                isSelected ? "border-primary ring-2 ring-primary/40 shadow-card-hover" : "border-border hover:border-primary/30"
               )}
-              style={{ minHeight: "220px" }}
             >
               {/* CCTV Live View Simulation Canvas */}
               <div className="absolute inset-0 bg-gradient-to-b from-zinc-900 via-zinc-950 to-zinc-900 flex items-center justify-center">
@@ -190,13 +189,13 @@ export function CamerasView({ cameras, alerts = [] }: CamerasViewProps) {
                   <rect x="65" y="10" width="30" height="70" fill="currentColor" fillOpacity="0.05" />
                 </svg>
 
-                {/* Bounding boxes */}
+                {/* Bounding boxes with 8px radius label chips */}
                 {showAiBoxes &&
                   isPlaying &&
                   tracks.map((p) => (
                     <div
                       key={p.id}
-                      className="absolute border border-cyan-400 bg-cyan-400/10 rounded-sm transition-all duration-300"
+                      className="absolute border-2 border-cyan-400 bg-cyan-400/10 rounded-[6px] transition-all duration-300 pointer-events-none"
                       style={{
                         left: `${p.x}%`,
                         top: `${p.y}%`,
@@ -204,9 +203,9 @@ export function CamerasView({ cameras, alerts = [] }: CamerasViewProps) {
                         height: `${p.h}%`,
                       }}
                     >
-                      <div className="absolute -top-5 left-0 bg-black/80 px-1.5 py-0.5 rounded text-[10px] font-mono text-cyan-300 flex items-center gap-1">
-                        <Crosshair className="w-2.5 h-2.5" />
-                        <span>{p.label}</span>
+                      <div className="absolute -top-6 left-0 bg-black/85 backdrop-blur-xs px-2 py-0.5 rounded-[8px] text-[11px] font-mono text-cyan-300 flex items-center gap-1.5 shadow-sm border border-cyan-400/30">
+                        <Crosshair className="w-3 h-3 text-cyan-400" />
+                        <span className="font-semibold">{p.label}</span>
                         <span className="text-zinc-400">({p.confidence}%)</span>
                       </div>
                     </div>
@@ -214,25 +213,25 @@ export function CamerasView({ cameras, alerts = [] }: CamerasViewProps) {
               </div>
 
               {/* Overlay: Top Camera Name & Status */}
-              <div className="relative z-10 p-2.5 flex items-center justify-between bg-gradient-to-b from-black/80 to-transparent text-white">
-                <div className="flex items-center gap-2">
-                  <span className={cn("w-2 h-2 rounded-full", status.dot)} aria-hidden="true" />
-                  <span className="font-medium text-xs tracking-tight">{cam.name}</span>
-                  <span className="text-[10px] text-zinc-400">{cam.location || `Zone #${cam.zone_id || "1"}`}</span>
+              <div className="relative z-10 p-3 flex items-center justify-between bg-gradient-to-b from-black/80 to-transparent text-white">
+                <div className="flex items-center gap-2.5">
+                  <span className={cn("w-2 h-2 rounded-full", status.dotClass)} aria-hidden="true" />
+                  <span className="font-semibold text-[13px] tracking-tight">{cam.name}</span>
+                  <span className="text-[12px] text-zinc-300 font-medium">{cam.location || `Zone #${cam.zone_id || "1"}`}</span>
                 </div>
 
-                <div className="flex items-center gap-2 font-mono text-[10px] text-zinc-400">
-                  <span className="flex items-center gap-1 text-red-400 font-medium">
-                    <Radio className="w-2.5 h-2.5 animate-pulse" /> REC
+                <div className="flex items-center gap-3 font-mono text-[11px] text-zinc-300">
+                  <span className="inline-flex items-center gap-1.5 text-red-400 font-semibold">
+                    <Radio className="w-3 h-3 animate-pulse-dot" /> LIVE
                   </span>
                   <span>{currentTimeStr}</span>
                 </div>
               </div>
 
-              {/* Overlay: Bottom Telemetry */}
-              <div className="relative z-10 p-2 flex items-center justify-between bg-gradient-to-t from-black/80 to-transparent text-white text-[10px] font-mono text-zinc-400">
-                <span>{cam.fps || 15} FPS · 1080p</span>
-                <span>{cam.latency_ms || 28} ms</span>
+              {/* Overlay: Bottom Telemetry Scrim */}
+              <div className="relative z-10 p-3 flex items-center justify-between bg-gradient-to-t from-black/80 to-transparent text-white text-[11px] font-mono text-zinc-300">
+                <span className="font-medium">{cam.fps || 15} FPS · 1080p stream</span>
+                <span>{cam.latency_ms || 28} ms latency</span>
               </div>
             </div>
           );

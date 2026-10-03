@@ -4,50 +4,78 @@
 
 @layer base {
   :root {
-    /* Neutral light theme by default (Stripe/Linear/GitHub inspired) */
-    --background: 0 0% 100%;
-    --foreground: 220 13% 13%;
-    --card: 0 0% 100%;
-    --card-foreground: 220 13% 13%;
-    --popover: 0 0% 100%;
-    --popover-foreground: 220 13% 13%;
-    --primary: 221 83% 53%;
+    /* Refero Light Mode Palette */
+    --background: 0 0% 98%; /* #fafafa */
+    --foreground: 240 6% 10%; /* #18181b */
+    --card: 0 0% 100%; /* #ffffff */
+    --card-foreground: 240 6% 10%; /* #18181b */
+    --popover: 0 0% 100%; /* #ffffff */
+    --popover-foreground: 240 6% 10%; /* #18181b */
+    --surface-elevated: 240 5% 96%; /* #f4f4f5 */
+    --surface-elevated-foreground: 240 6% 10%;
+    
+    /* Refero Indigo Primary */
+    --primary: 243 75% 59%; /* #4f46e5 (indigo-600) */
+    --primary-hover: 244 58% 51%; /* #4338ca (indigo-700) */
     --primary-foreground: 0 0% 100%;
-    --secondary: 220 14% 96%;
-    --secondary-foreground: 220 13% 13%;
-    --muted: 220 14% 96%;
-    --muted-foreground: 220 9% 46%;
-    --accent: 220 14% 93%;
-    --accent-foreground: 220 13% 13%;
-    --destructive: 0 72% 51%;
+    
+    /* Neutrals & Muted */
+    --secondary: 240 5% 96%; /* #f4f4f5 */
+    --secondary-foreground: 240 6% 10%;
+    --muted: 240 5% 96%; /* #f4f4f5 */
+    --muted-foreground: 240 4% 46%; /* #71717a */
+    --text-tertiary: 240 5% 65%; /* #a1a1aa */
+    --accent: 240 5% 94%;
+    --accent-foreground: 240 6% 10%;
+    
+    /* Semantic Colors */
+    --success: 160 84% 31%; /* #059669 (emerald-600) */
+    --warning: 38 92% 44%; /* #d97706 (amber-600) */
+    --destructive: 0 72% 51%; /* #dc2626 (red-600) */
     --destructive-foreground: 0 0% 100%;
-    --border: 220 13% 89%;
-    --input: 220 13% 89%;
-    --ring: 221 83% 53%;
-    --radius: 6px;
+    --info: 217 91% 60%; /* #2563eb (blue-600) */
+    
+    --border: 0 0% 91%; /* #e8e8e8 */
+    --input: 0 0% 91%;
+    --ring: 243 75% 59%;
+    --radius: 10px;
   }
 
   .dark {
-    /* Plain dark option (#111 to #181818 range, true neutral, not navy-black) */
-    --background: 0 0% 7%;
-    --foreground: 0 0% 93%;
-    --card: 0 0% 9.5%;
-    --card-foreground: 0 0% 93%;
-    --popover: 0 0% 9.5%;
-    --popover-foreground: 0 0% 93%;
-    --primary: 221 83% 58%;
-    --primary-foreground: 0 0% 100%;
-    --secondary: 0 0% 13%;
-    --secondary-foreground: 0 0% 90%;
-    --muted: 0 0% 13%;
-    --muted-foreground: 0 0% 62%;
-    --accent: 0 0% 15%;
-    --accent-foreground: 0 0% 93%;
-    --destructive: 0 65% 51%;
+    /* Refero Dark Mode Palette */
+    --background: 240 7% 5%; /* #0c0c0e */
+    --foreground: 0 0% 98%; /* #fafafa */
+    --card: 240 6% 10%; /* #18181b */
+    --card-foreground: 0 0% 98%; /* #fafafa */
+    --popover: 240 6% 10%; /* #18181b */
+    --popover-foreground: 0 0% 98%;
+    --surface-elevated: 240 4% 16%; /* #27272a */
+    --surface-elevated-foreground: 0 0% 98%;
+    
+    /* Refero Indigo Dark Accent */
+    --primary: 239 84% 74%; /* #818cf8 (indigo-400) */
+    --primary-hover: 231 97% 85%; /* #a5b4fc (indigo-300) */
+    --primary-foreground: 240 6% 10%;
+    
+    /* Neutrals & Muted */
+    --secondary: 240 4% 16%; /* #27272a */
+    --secondary-foreground: 0 0% 98%;
+    --muted: 240 4% 16%; /* #27272a */
+    --muted-foreground: 240 5% 65%; /* #a1a1aa */
+    --text-tertiary: 240 4% 46%; /* #71717a */
+    --accent: 240 4% 20%;
+    --accent-foreground: 0 0% 98%;
+    
+    /* Semantic Colors */
+    --success: 156 73% 58%; /* #34d399 (emerald-400) */
+    --warning: 45 93% 56%; /* #fbbf24 (amber-400) */
+    --destructive: 0 91% 71%; /* #f87171 (red-400) */
     --destructive-foreground: 0 0% 100%;
-    --border: 0 0% 16%;
-    --input: 0 0% 16%;
-    --ring: 221 83% 58%;
+    --info: 213 94% 68%; /* #60a5fa (blue-400) */
+    
+    --border: 240 4% 16%; /* #27272a */
+    --input: 240 4% 16%;
+    --ring: 239 84% 74%;
   }
 
   * {
@@ -55,11 +83,11 @@
   }
 
   body {
-    @apply bg-background text-foreground antialiased font-sans text-[13px] leading-normal;
-    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+    @apply bg-background text-foreground antialiased font-sans text-[14px] leading-normal;
+    font-feature-settings: "cv02", "cv03", "cv04", "cv11", "ss01";
   }
 
-  /* Compact native scrollbars without glow */
+  /* Custom Refero Scrollbars */
   ::-webkit-scrollbar {
     width: 6px;
     height: 6px;
@@ -68,10 +96,96 @@
     background: transparent;
   }
   ::-webkit-scrollbar-thumb {
-    background: rgba(150, 150, 150, 0.25);
-    border-radius: 3px;
+    background: rgba(140, 140, 150, 0.2);
+    border-radius: 9999px;
   }
   ::-webkit-scrollbar-thumb:hover {
-    background: rgba(150, 150, 150, 0.4);
+    background: rgba(140, 140, 150, 0.35);
+  }
+}
+
+/* Refero Micro-animations & Keyframes */
+@keyframes shimmer {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+@keyframes pulse-dot {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.3);
+    opacity: 0.6;
+  }
+}
+
+@keyframes fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slide-in-right {
+  from {
+    opacity: 0;
+    transform: translateX(100%);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes slide-in-bottom {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-shimmer {
+  animation: shimmer 1.5s infinite linear;
+}
+
+.animate-pulse-dot {
+  animation: pulse-dot 2s infinite ease-in-out;
+}
+
+.animate-fade-up {
+  animation: fade-up 150ms ease-out forwards;
+}
+
+.animate-slide-in-right {
+  animation: slide-in-right 200ms ease-out forwards;
+}
+
+.animate-slide-in-bottom {
+  animation: slide-in-bottom 200ms ease-out forwards;
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  ::before,
+  ::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
   }
 }

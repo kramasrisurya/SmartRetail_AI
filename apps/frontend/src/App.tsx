@@ -147,7 +147,7 @@ export function App() {
   }
 
   return (
-    <div className="flex h-screen w-screen overflow-hidden bg-background text-foreground font-sans text-[13px]">
+    <div className="flex h-screen w-screen overflow-hidden bg-background text-foreground font-sans text-[14px]">
       {/* Toast Notification Stack */}
       <ToastContainer />
 

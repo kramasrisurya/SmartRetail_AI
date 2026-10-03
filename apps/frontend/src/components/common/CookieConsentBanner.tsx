@@ -31,24 +31,24 @@ export function CookieConsentBanner({ onOpenPrivacy }: CookieConsentBannerProps)
   if (!visible) return null;
 
   return (
-    <div className="fixed bottom-3 right-3 sm:right-4 max-w-sm z-50 animate-in fade-in duration-100">
-      <div className="rounded-[6px] border border-border bg-popover p-3 shadow-lg text-foreground text-xs space-y-2">
-        <p className="text-muted-foreground leading-normal">
-          We use functional session storage for authentication and optional anonymous metrics to track camera stream performance.
+    <div className="fixed bottom-4 right-4 sm:right-6 max-w-sm z-50 animate-slide-in-right">
+      <div className="rounded-[10px] border border-border bg-card p-4 shadow-modal text-foreground text-[13px] space-y-3">
+        <p className="text-text-secondary leading-relaxed">
+          We use functional session storage for authentication and anonymous telemetry to optimize camera stream performance.
         </p>
         <div className="flex items-center justify-between pt-1">
-          <div className="flex items-center gap-1.5">
+          <div className="flex items-center gap-2">
             <button
               onClick={handleAcceptAll}
-              className="px-2.5 py-1 rounded-[4px] bg-foreground text-background text-xs font-medium hover:opacity-90 transition"
+              className="px-3 py-1.5 rounded-[6px] bg-primary text-primary-foreground text-[12px] font-semibold hover:bg-primary-hover transition shadow-xs"
             >
-              Accept
+              Accept All
             </button>
             <button
               onClick={handleEssentialOnly}
-              className="px-2.5 py-1 rounded-[4px] border border-border text-foreground text-xs hover:bg-muted transition"
+              className="px-3 py-1.5 rounded-[6px] border border-border bg-surface-elevated text-text-secondary text-[12px] font-medium hover:text-foreground transition"
             >
-              Essential only
+              Essential Only
             </button>
           </div>
           {onOpenPrivacy && (
@@ -57,7 +57,7 @@ export function CookieConsentBanner({ onOpenPrivacy }: CookieConsentBannerProps)
                 onOpenPrivacy();
                 setVisible(false);
               }}
-              className="text-xs text-muted-foreground hover:text-foreground transition underline"
+              className="text-[12px] text-text-tertiary hover:text-primary transition underline font-medium"
             >
               Privacy
             </button>
