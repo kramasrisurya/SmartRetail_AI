@@ -9,6 +9,10 @@ import {
   User,
   Activity,
   Sparkles,
+  Lock,
+  ShoppingBag,
+  Clock,
+  TrendingUp,
 } from "lucide-react";
 import { Camera, HeatmapCell, Zone, EventItem } from "../../types";
 import { cn, formatTimeAgo, getStatusDot } from "../../lib/utils";
@@ -30,7 +34,7 @@ export function StoreMapView({
   selectedCamera,
   onSelectCamera,
 }: StoreMapViewProps) {
-  const [heatmapIntensity, setHeatmapIntensity] = useState<number>(60);
+  const [heatmapIntensity, setHeatmapIntensity] = useState<number>(65);
   const [showHeatmap, setShowHeatmap] = useState(true);
   const [showFovCones, setShowFovCones] = useState(true);
   const [hoveredCam, setHoveredCam] = useState<Camera | null>(null);
@@ -50,16 +54,19 @@ export function StoreMapView({
     });
   }, [events, selectedCamera, selectedZone]);
 
-  // Calculate FOV cone polygon coordinates for SVG
-  const getFovCone = useCallback(
-    (cx: number, cy: number, facingDeg: number = 0, fovDeg: number = 70, length: number = 20) => {
-      const angle1 = ((facingDeg - fovDeg / 2 - 90) * Math.PI) / 180;
-      const angle2 = ((facingDeg + fovDeg / 2 - 90) * Math.PI) / 180;
-      const x1 = cx + length * Math.cos(angle1);
-      const y1 = cy + length * Math.sin(angle1);
-      const x2 = cx + length * Math.cos(angle2);
-      const y2 = cy + length * Math.sin(angle2);
-      return `${cx},${cy} ${x1.toFixed(1)},${y1.toFixed(1)} ${x2.toFixed(1)},${y2.toFixed(1)}`;
+  // Generate smooth arc sector for modern vision coverage FOV
+  const getFovSector = useCallback(
+    (cx: number, cy: number, facingDeg: number = 180, fovDeg: number = 70, radius: number = 18) => {
+      const halfFov = fovDeg / 2;
+      const startAngle = ((facingDeg - halfFov - 90) * Math.PI) / 180;
+      const endAngle = ((facingDeg + halfFov - 90) * Math.PI) / 180;
+
+      const x1 = cx + radius * Math.cos(startAngle);
+      const y1 = cy + radius * Math.sin(startAngle);
+      const x2 = cx + radius * Math.cos(endAngle);
+      const y2 = cy + radius * Math.sin(endAngle);
+
+      return `M ${cx} ${cy} L ${x1.toFixed(1)} ${y1.toFixed(1)} A ${radius} ${radius} 0 0 1 ${x2.toFixed(1)} ${y2.toFixed(1)} Z`;
     },
     []
   );
@@ -68,26 +75,43 @@ export function StoreMapView({
     return poly.map((pt) => `${pt.x},${pt.y}`).join(" ");
   }, []);
 
+  // Compute bounding box for zone to place title badges in top-left without collisions
+  const getZoneBounds = useCallback((polygon: Array<{ x: number; y: number }>) => {
+    if (!polygon || polygon.length === 0) return { minX: 10, minY: 10, maxX: 30, maxY: 30 };
+    let minX = polygon[0].x;
+    let maxX = polygon[0].x;
+    let minY = polygon[0].y;
+    let maxY = polygon[0].y;
+    for (const pt of polygon) {
+      if (pt.x < minX) minX = pt.x;
+      if (pt.x > maxX) maxX = pt.x;
+      if (pt.y < minY) minY = pt.y;
+      if (pt.y > maxY) maxY = pt.y;
+    }
+    return { minX, minY, maxX, maxY };
+  }, []);
+
   const customerDots = useMemo(() => {
     return [
-      { id: 1, x: 22, y: 72, label: "Shopper #101" },
-      { id: 2, x: 48, y: 18, label: "Shopper #102" },
-      { id: 3, x: 50, y: 104, label: "Shopper #103" },
-      { id: 4, x: 78, y: 40, label: "Shopper #104" },
-      { id: 5, x: 18, y: 138, label: "Shopper #105" },
+      { id: 1, x: 26, y: 78, label: "Shopper #101", dwell: "02:15" },
+      { id: 2, x: 52, y: 22, label: "Shopper #102", dwell: "01:40" },
+      { id: 3, x: 58, y: 108, label: "Shopper #103", dwell: "04:12" },
+      { id: 4, x: 74, y: 44, label: "Shopper #104", dwell: "00:50" },
+      { id: 5, x: 22, y: 132, label: "Shopper #105", dwell: "03:00" },
+      { id: 6, x: 70, y: 130, label: "Shopper #106", dwell: "01:10" },
     ];
   }, []);
 
   return (
-    <div className="space-y-5 animate-fade-up max-w-7xl mx-auto">
+    <div className="space-y-5 animate-fade-up max-w-7xl mx-auto pb-8">
       {/* Top Header & Map Controls */}
-      <div className="flex flex-wrap items-center justify-between gap-4 border-b border-border pb-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-border pb-4">
         <div>
           <h1 className="text-[20px] font-semibold text-foreground tracking-tight">
-            Floor Plan & Spatial Heatmap
+            Interactive Store Floor Plan & Spatial Heatmap
           </h1>
           <p className="text-[14px] text-text-secondary">
-            {zones.length} monitored retail zones · {cameras.length} camera viewpoints · 12 live shoppers
+            Multi-zone spatial occupancy, camera field-of-view coverage, and thermal footfall density
           </p>
         </div>
 
@@ -118,7 +142,7 @@ export function StoreMapView({
                 onChange={(e) => setShowHeatmap(e.target.checked)}
                 className="rounded-[4px] border-border text-primary focus:ring-0"
               />
-              <span className="text-text-secondary font-medium">Heatmap</span>
+              <span className="text-text-secondary font-medium">Thermal Heatmap</span>
             </label>
             {showHeatmap && (
               <input
@@ -143,36 +167,95 @@ export function StoreMapView({
             )}
           >
             {showFovCones ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
-            <span>FOV Cones</span>
+            <span>FOV Coverage</span>
           </button>
         </div>
       </div>
 
-      {/* Main Area: SVG Floorplan Canvas + Side Context Drawer */}
-      <div className="flex flex-col lg:flex-row gap-5 min-h-[560px]">
-        {/* SVG Floorplan Canvas Card */}
-        <div className="flex-1 rounded-[10px] border border-border bg-card p-6 relative overflow-hidden flex flex-col items-center justify-center min-h-[500px] shadow-card">
-          <div className="w-full max-w-2xl aspect-[100/150] relative">
+      {/* Main Floorplan Presentation Card & Side Inspector */}
+      <div className="flex flex-col lg:flex-row gap-5 min-h-[580px]">
+        {/* Architectural SVG Canvas Card */}
+        <div className="flex-1 rounded-[10px] border border-border bg-card p-6 relative overflow-hidden flex flex-col items-center justify-center min-h-[520px] shadow-card">
+          {/* Floorplan Legend Bar */}
+          <div className="w-full flex items-center justify-between mb-3 px-2 text-[12px] text-text-tertiary">
+            <div className="flex items-center gap-4">
+              <span className="flex items-center gap-1.5">
+                <span className="w-2.5 h-2.5 rounded-[3px] bg-primary/20 border border-primary/50" /> Sales Zones
+              </span>
+              <span className="flex items-center gap-1.5">
+                <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse-dot" /> Live Shoppers
+              </span>
+              <span className="flex items-center gap-1.5">
+                <span className="w-2.5 h-2.5 rounded-full bg-indigo-500" /> Camera Nodes
+              </span>
+            </div>
+            <span className="font-mono text-[11px]">Downtown Flagship · Level 1 Floor Plan</span>
+          </div>
+
+          <div className="w-full max-w-2xl aspect-[110/160] relative">
             <svg
-              viewBox="0 0 100 150"
+              viewBox="-10 -8 120 166"
               className="w-full h-full select-none"
-              aria-label="Store Floorplan Interactive SVG"
+              aria-label="Architectural Store Floorplan SVG"
             >
-              {/* Outer boundary wall */}
+              <defs>
+                {/* Heatmap Blur Filter */}
+                <filter id="blur-heat" x="-20%" y="-20%" width="140%" height="140%">
+                  <feGaussianBlur stdDeviation="3.5" />
+                </filter>
+
+                {/* Soft FOV Arc Gradient */}
+                <radialGradient id="fov-gradient" cx="0%" cy="0%" r="100%">
+                  <stop offset="0%" stopColor="#4f46e5" stopOpacity="0.25" />
+                  <stop offset="60%" stopColor="#06b6d4" stopOpacity="0.12" />
+                  <stop offset="100%" stopColor="#06b6d4" stopOpacity="0.0" />
+                </radialGradient>
+
+                <radialGradient id="fov-hover-gradient" cx="0%" cy="0%" r="100%">
+                  <stop offset="0%" stopColor="#4f46e5" stopOpacity="0.4" />
+                  <stop offset="60%" stopColor="#38bdf8" stopOpacity="0.2" />
+                  <stop offset="100%" stopColor="#38bdf8" stopOpacity="0.0" />
+                </radialGradient>
+
+                {/* Heatmap color gradients */}
+                <radialGradient id="heat-high">
+                  <stop offset="0%" stopColor="#dc2626" stopOpacity="0.7" />
+                  <stop offset="50%" stopColor="#d97706" stopOpacity="0.35" />
+                  <stop offset="100%" stopColor="#d97706" stopOpacity="0" />
+                </radialGradient>
+
+                <radialGradient id="heat-medium">
+                  <stop offset="0%" stopColor="#f59e0b" stopOpacity="0.5" />
+                  <stop offset="60%" stopColor="#3b82f6" stopOpacity="0.2" />
+                  <stop offset="100%" stopColor="#3b82f6" stopOpacity="0" />
+                </radialGradient>
+              </defs>
+
+              {/* Architectural Grid & Floor Plate */}
               <rect
-                x="0"
-                y="0"
-                width="100"
-                height="150"
+                x="-4"
+                y="-4"
+                width="108"
+                height="158"
                 fill="none"
                 stroke="currentColor"
-                strokeWidth="1.5"
+                strokeWidth="1.2"
                 className="text-border"
+                rx="3"
               />
 
-              {/* Zones Layer: 8% opacity primary fill with 1px stroke */}
+              {/* Entrance Gate Representation at Bottom */}
+              <rect x="38" y="152" width="24" height="3" fill="#4f46e5" opacity="0.6" rx="1" />
+              <text x="50" y="157.5" textAnchor="middle" className="text-[2.6px] font-sans font-semibold fill-text-tertiary uppercase tracking-wider">
+                Store Entrance / Exit
+              </text>
+
+              {/* Zones Layer with Clean Non-Colliding Top-Left Badges */}
               {zones.map((zone) => {
                 const isSelected = selectedZone?.id === zone.id;
+                const bounds = getZoneBounds(zone.polygon);
+                const isStaff = zone.name.toLowerCase().includes("staff");
+
                 return (
                   <g
                     key={zone.id}
@@ -182,87 +265,116 @@ export function StoreMapView({
                     }}
                     className="cursor-pointer group"
                   >
+                    {/* Zone Boundary Polygon */}
                     <polygon
                       points={formatPolygon(zone.polygon)}
                       className={cn(
-                        "transition-all duration-200 stroke-1",
+                        "transition-all duration-200",
                         isSelected
-                          ? "fill-primary/20 stroke-primary stroke-[1.5]"
-                          : "fill-primary/[0.06] stroke-border/80 hover:fill-primary/[0.12] hover:stroke-primary/50"
+                          ? "fill-primary/20 stroke-primary stroke-[1.4]"
+                          : isStaff
+                          ? "fill-zinc-500/[0.08] stroke-zinc-500/40 hover:fill-zinc-500/15"
+                          : "fill-primary/[0.06] stroke-border/90 hover:fill-primary/[0.12] hover:stroke-primary/50 stroke-[0.8]"
                       )}
                     />
-                    {zone.polygon[0] && (
+
+                    {/* Zone Label Badge inside Top-Left corner of Zone (Never Collides with Cameras!) */}
+                    <g transform={`translate(${Math.max(-2, bounds.minX + 2.5)}, ${bounds.minY + 3.2})`}>
+                      <rect
+                        x="-1"
+                        y="-2.5"
+                        width={zone.name.length * 2.2 + 4}
+                        height="5"
+                        rx="1.5"
+                        className={cn(
+                          "transition-colors",
+                          isSelected
+                            ? "fill-primary text-white"
+                            : "fill-surface-elevated/95 stroke-border/60 stroke-[0.4]"
+                        )}
+                      />
                       <text
-                        x={(zone.polygon[0].x + zone.polygon[2]?.x) / 2 || zone.polygon[0].x + 5}
-                        y={(zone.polygon[0].y + zone.polygon[2]?.y) / 2 || zone.polygon[0].y + 8}
-                        textAnchor="middle"
-                        dominantBaseline="middle"
-                        className="text-[3.2px] font-sans font-semibold fill-text-secondary group-hover:fill-foreground pointer-events-none transition-colors"
+                        x="1"
+                        y="0.8"
+                        className={cn(
+                          "text-[2.6px] font-sans font-semibold tracking-tight transition-colors pointer-events-none",
+                          isSelected ? "fill-white" : "fill-foreground"
+                        )}
                       >
                         {zone.name}
                       </text>
-                    )}
+                    </g>
                   </g>
                 );
               })}
 
-              {/* Heatmap Dwell Intensity Overlay with Radial Gradients & Blur */}
+              {/* Heatmap Multi-Stop Smooth Thermal Blooms */}
               {showHeatmap &&
                 heatmapCells.map((cell, idx) => (
                   <circle
                     key={idx}
                     cx={cell.x}
                     cy={cell.y}
-                    r={7 + cell.intensity * 9}
-                    fill={cell.intensity > 0.6 ? "#dc2626" : cell.intensity > 0.3 ? "#d97706" : "#2563eb"}
-                    opacity={(cell.intensity * heatmapIntensity) / 140}
-                    className="pointer-events-none blur-[3px] transition-opacity duration-300"
+                    r={8 + cell.intensity * 10}
+                    fill={cell.intensity > 0.6 ? "url(#heat-high)" : "url(#heat-medium)"}
+                    opacity={(cell.intensity * heatmapIntensity) / 120}
+                    filter="url(#blur-heat)"
+                    className="pointer-events-none transition-opacity duration-300"
                   />
                 ))}
 
-              {/* Camera FOV Cones: 5% opacity fill with dashed stroke */}
+              {/* Camera Field-of-View Coverage Cones (Organic Sector Arcs) */}
               {showFovCones &&
                 cameras.map((cam) => {
                   if (cam.map_x === null || cam.map_y === null) return null;
                   const isHovered = hoveredCam?.id === cam.id;
                   const isSelected = selectedCamera?.id === cam.id;
 
+                  // Mount position shifted slightly toward zone edge for realism
+                  const mountX = cam.map_x;
+                  const mountY = Math.max(8, cam.map_y - 6);
+
                   return (
-                    <polygon
-                      key={`cone-${cam.id}`}
-                      points={getFovCone(cam.map_x, cam.map_y, cam.facing || 0, cam.fov || 65, 22)}
-                      strokeDasharray="1 1"
-                      className={cn(
-                        "pointer-events-none transition-all duration-150",
-                        isSelected
-                          ? "fill-primary/20 stroke-primary stroke-[0.6]"
-                          : isHovered
-                          ? "fill-cyan-500/15 stroke-cyan-400 stroke-[0.5]"
-                          : "fill-cyan-500/[0.05] stroke-cyan-500/30 stroke-[0.3]"
-                      )}
+                    <path
+                      key={`fov-${cam.id}`}
+                      d={getFovSector(mountX, mountY, cam.facing || 180, cam.fov || 65, 20)}
+                      fill={isSelected || isHovered ? "url(#fov-hover-gradient)" : "url(#fov-gradient)"}
+                      stroke={isSelected ? "#4f46e5" : isHovered ? "#38bdf8" : "#06b6d4"}
+                      strokeWidth={isSelected ? "0.6" : "0.3"}
+                      strokeOpacity={isSelected ? 0.8 : 0.4}
+                      className="pointer-events-none transition-all duration-200"
                     />
                   );
                 })}
 
-              {/* Live Shopper Dots: 6px circles with 2px white ring and pulse */}
+              {/* Live Shopper Nodes (6px circle with white core and pulsing aura) */}
               {customerDots.map((dot) => (
-                <g key={dot.id} className="pointer-events-none">
-                  <circle cx={dot.x} cy={dot.y} r="2.4" className="fill-emerald-400 animate-pulse-dot" />
-                  <circle cx={dot.x} cy={dot.y} r="1" className="fill-white stroke-emerald-600 stroke-[0.3]" />
+                <g key={dot.id} className="cursor-pointer group">
+                  <circle cx={dot.x} cy={dot.y} r="2.8" className="fill-emerald-400 animate-pulse-dot" />
+                  <circle cx={dot.x} cy={dot.y} r="1.1" className="fill-white stroke-emerald-600 stroke-[0.3]" />
+                  {/* Hover Tag */}
+                  <g className="opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+                    <rect x={dot.x - 8} y={dot.y - 7} width="16" height="4.5" rx="1" fill="#18181b" />
+                    <text x={dot.x} y={dot.y - 4} textAnchor="middle" className="text-[2.2px] font-mono fill-white">
+                      {dot.label}
+                    </text>
+                  </g>
                 </g>
               ))}
 
-              {/* Camera Icon Markers */}
+              {/* Camera Hardware Mount Icons (Ceiling mounted, distinct from text) */}
               {cameras.map((cam) => {
                 if (cam.map_x === null || cam.map_y === null) return null;
                 const isSelected = selectedCamera?.id === cam.id;
                 const isHovered = hoveredCam?.id === cam.id;
                 const status = getStatusDot(cam.status);
+                const mountX = cam.map_x;
+                const mountY = Math.max(8, cam.map_y - 6);
 
                 return (
                   <g
                     key={cam.id}
-                    transform={`translate(${cam.map_x}, ${cam.map_y})`}
+                    transform={`translate(${mountX}, ${mountY})`}
                     onClick={(e) => {
                       e.stopPropagation();
                       onSelectCamera(cam);
@@ -270,21 +382,28 @@ export function StoreMapView({
                     }}
                     onMouseEnter={() => setHoveredCam(cam)}
                     onMouseLeave={() => setHoveredCam(null)}
-                    className="cursor-pointer"
+                    className="cursor-pointer group"
                   >
+                    {/* Mounting Base Plate */}
                     <circle
-                      r={isSelected ? "3.6" : isHovered ? "3.0" : "2.4"}
+                      r={isSelected ? "3.6" : isHovered ? "3.2" : "2.6"}
                       className={cn(
-                        "transition-all duration-150",
+                        "transition-all duration-200 shadow-sm",
                         isSelected
-                          ? "fill-primary stroke-background stroke-[1]"
-                          : "fill-card stroke-border stroke-[0.8] hover:fill-surface-elevated"
+                          ? "fill-primary stroke-white stroke-[0.8]"
+                          : "fill-card stroke-border stroke-[0.6] group-hover:stroke-primary"
                       )}
                     />
-                    <circle
-                      r="1.2"
-                      className={status.dotClass}
-                    />
+                    {/* Status lens center */}
+                    <circle r="1.1" className={status.dotClass} />
+
+                    {/* Camera Name Tooltip Tag on Hover */}
+                    <g className={cn("transition-opacity pointer-events-none", isHovered || isSelected ? "opacity-100" : "opacity-0")}>
+                      <rect x="-10" y="-8.5" width="20" height="5" rx="1.5" fill="#18181b" stroke="#3f3f46" strokeWidth="0.3" />
+                      <text x="0" y="-5.2" textAnchor="middle" className="text-[2.3px] font-mono font-semibold fill-white">
+                        {cam.name}
+                      </text>
+                    </g>
                   </g>
                 );
               })}
@@ -292,20 +411,21 @@ export function StoreMapView({
           </div>
         </div>
 
-        {/* Side Context & Event Log Drawer */}
+        {/* Side Context & Zone Inspector Drawer */}
         {(selectedCamera || selectedZone) && (
           <aside
             role="region"
-            aria-label="Spatial Selection Details"
-            className="w-full lg:w-88 rounded-[10px] border border-border bg-card p-5 flex flex-col justify-between space-y-4 shadow-card animate-slide-in-right"
+            aria-label="Spatial Inspection Panel"
+            className="w-full lg:w-92 rounded-[10px] border border-border bg-card p-5 flex flex-col justify-between space-y-4 shadow-card animate-slide-in-right shrink-0"
           >
             <div className="space-y-4">
-              <div className="flex items-start justify-between border-b border-border pb-3">
+              {/* Header */}
+              <div className="flex items-start justify-between border-b border-border pb-3.5">
                 <div>
                   <span className="text-[11px] text-text-tertiary uppercase tracking-[0.04em] font-semibold">
-                    {selectedCamera ? "Camera Node" : "Store Zone"}
+                    {selectedCamera ? "Camera Node Inspector" : "Retail Zone Telemetry"}
                   </span>
-                  <h3 className="text-[16px] font-semibold text-foreground tracking-tight">
+                  <h3 className="text-[17px] font-semibold text-foreground tracking-tight mt-0.5">
                     {selectedCamera ? selectedCamera.name : selectedZone?.name}
                   </h3>
                 </div>
@@ -315,47 +435,74 @@ export function StoreMapView({
                     onSelectCamera(null);
                     setSelectedZone(null);
                   }}
-                  className="p-1 rounded-[6px] text-text-tertiary hover:text-foreground hover:bg-surface-elevated transition"
+                  className="p-1.5 rounded-[6px] text-text-tertiary hover:text-foreground hover:bg-surface-elevated transition"
                 >
                   <X className="w-4 h-4" />
                 </button>
               </div>
 
-              {selectedCamera && (
-                <div className="space-y-2.5 text-[13px]">
+              {/* Zone Telemetry Metrics */}
+              {selectedZone && (
+                <div className="space-y-3">
                   <div className="grid grid-cols-2 gap-2.5">
-                    <div className="p-2.5 rounded-[8px] bg-surface-elevated border border-border">
-                      <span className="text-[11px] text-text-tertiary block font-medium">Status</span>
-                      <span className="font-semibold text-foreground capitalize">{selectedCamera.status}</span>
+                    <div className="p-3 rounded-[8px] bg-surface-elevated border border-border">
+                      <span className="text-[11px] text-text-tertiary block font-medium">Zone Occupancy</span>
+                      <span className="text-[16px] font-bold text-foreground font-mono">14 shoppers</span>
                     </div>
-                    <div className="p-2.5 rounded-[8px] bg-surface-elevated border border-border">
-                      <span className="text-[11px] text-text-tertiary block font-medium">Target FPS</span>
-                      <span className="font-semibold text-foreground">{selectedCamera.fps || 15} FPS</span>
+                    <div className="p-3 rounded-[8px] bg-surface-elevated border border-border">
+                      <span className="text-[11px] text-text-tertiary block font-medium">Avg Dwell Time</span>
+                      <span className="text-[16px] font-bold text-foreground font-mono">2m 45s</span>
                     </div>
                   </div>
-                  <div className="p-2.5 rounded-[8px] bg-surface-elevated border border-border">
-                    <span className="text-[11px] text-text-tertiary block font-medium">Telemetry Latency</span>
-                    <span className="font-mono font-medium text-foreground">{selectedCamera.latency_ms || 28} ms</span>
+
+                  <div className="p-3 rounded-[8px] bg-surface-elevated border border-border space-y-2">
+                    <div className="flex justify-between text-[12px]">
+                      <span className="text-text-secondary font-medium">Congestion Density</span>
+                      <span className="font-semibold text-emerald-600 dark:text-emerald-400">Normal (34%)</span>
+                    </div>
+                    <div className="w-full h-1.5 rounded-full bg-muted overflow-hidden">
+                      <div className="h-full bg-emerald-500 rounded-full" style={{ width: "34%" }} />
+                    </div>
                   </div>
                 </div>
               )}
 
-              {/* Real-time Zone / Camera Events Stream */}
+              {/* Camera Details */}
+              {selectedCamera && (
+                <div className="space-y-3 text-[13px]">
+                  <div className="grid grid-cols-2 gap-2.5">
+                    <div className="p-3 rounded-[8px] bg-surface-elevated border border-border">
+                      <span className="text-[11px] text-text-tertiary block font-medium">Stream Status</span>
+                      <span className="font-semibold text-foreground capitalize">{selectedCamera.status}</span>
+                    </div>
+                    <div className="p-3 rounded-[8px] bg-surface-elevated border border-border">
+                      <span className="text-[11px] text-text-tertiary block font-medium">Edge Framerate</span>
+                      <span className="font-semibold text-foreground">{selectedCamera.fps || 30} FPS</span>
+                    </div>
+                  </div>
+                  <div className="p-3 rounded-[8px] bg-surface-elevated border border-border">
+                    <span className="text-[11px] text-text-tertiary block font-medium">Telemetry Latency</span>
+                    <span className="font-mono font-semibold text-foreground">{selectedCamera.latency_ms || 24} ms</span>
+                  </div>
+                </div>
+              )}
+
+              {/* Zone / Camera Recent Spatial Events Stream */}
               <div className="space-y-2.5">
                 <h4 className="text-[13px] font-semibold text-foreground flex items-center gap-2">
                   <Activity className="w-4 h-4 text-primary" />
-                  <span>Recent Spatial Events</span>
+                  <span>Live Activity Stream</span>
                 </h4>
 
-                <div className="space-y-2 max-h-60 overflow-y-auto pr-1">
+                <div className="space-y-2 max-h-56 overflow-y-auto pr-1">
                   {activeEvents.length === 0 ? (
                     <div className="py-6 text-center text-[13px] text-text-tertiary border border-dashed border-border rounded-[8px]">
-                      No active events recorded in this zone.
+                      No active anomalies in this zone.
                     </div>
                   ) : (
-                    activeEvents.slice(0, 6).map((ev) => (
+                    activeEvents.slice(0, 5).map((ev) => (
                       <div key={ev.id} className="p-2.5 rounded-[8px] border border-border bg-surface-elevated text-[13px]">
-                        <div className="font-medium text-foreground capitalize">
+                        <div className="font-semibold text-foreground capitalize">
                           {ev.event_type.replace(/_/g, " ")}
                         </div>
                         <div className="text-[11px] text-text-tertiary tabular-nums mt-0.5">
