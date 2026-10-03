@@ -89,18 +89,12 @@ ZONES = [
 
 CAMERAS = [
     # name, zone, location, orientation, fov, gpu, x, y, facing(deg CW from north)
-    ("CAM-01", "Shelf A", "Shelf A", "south", 60, "gpu-0", 20.0, 15.0, 180),
-    ("CAM-02", "Shelf B", "Shelf B", "south", 60, "gpu-0", 50.0, 15.0, 180),
-    ("CAM-03", "Shelf C", "Shelf C", "south", 60, "gpu-0", 80.0, 15.0, 180),
-    ("CAM-04", "Shelf D", "Shelf D", "south", 60, "gpu-0", 20.0, 40.0, 180),
-    ("CAM-05", "Shelf E", "Shelf E", "south", 60, "gpu-0", 50.0, 40.0, 180),
-    ("CAM-06", "Shelf F", "Shelf F", "south", 60, "gpu-0", 80.0, 40.0, 180),
-    ("CAM-07", "Customer Area", "Customer Area", "center", 90, "gpu-0", 50.0, 72.0, 180),
-    ("CAM-08", "Checkout", "Checkout 1", "north", 70, "gpu-1", 20.0, 105.0, 0),
-    ("CAM-09", "Checkout", "Checkout 2", "north", 70, "gpu-1", 50.0, 105.0, 0),
-    ("CAM-10", "Checkout", "Checkout 3", "north", 70, "gpu-1", 80.0, 105.0, 0),
-    ("CAM-11", "Entrance", "Entrance", "north", 80, "gpu-1", 12.0, 135.0, 90),
-    ("CAM-12", "Exit", "Exit", "south", 80, "gpu-1", 88.0, 135.0, 270),
+    ("CAM-01", "Gondola A", "NW Ceiling Corner", "southeast", 70, "gpu-0", 4.0, 6.0, 135),
+    ("CAM-02", "Gondola B", "NE Ceiling Corner", "southwest", 70, "gpu-0", 96.0, 6.0, 225),
+    ("CAM-03", "Gondola C", "East Perimeter Wall", "west", 75, "gpu-0", 97.0, 52.0, 270),
+    ("CAM-04", "Cosmetics", "West Perimeter Wall", "east", 75, "gpu-0", 3.0, 52.0, 80),
+    ("CAM-05", "Checkout", "Overhead Checkout Gimbal", "south", 85, "gpu-0", 50.0, 92.0, 180),
+    ("CAM-06", "Entrance", "Entrance Vestibule Corner", "northeast", 75, "gpu-1", 4.0, 132.0, 60),
 ]
 
 CAMERA_RELATIONSHIPS = [

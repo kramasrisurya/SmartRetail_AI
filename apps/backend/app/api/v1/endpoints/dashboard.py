@@ -75,18 +75,12 @@ DEFAULT_ZONES = [
 ]
 
 DEFAULT_CAMERAS = [
-    {"id": 1, "name": "CAM-01", "status": "active", "map_x": 20.0, "map_y": 15.0, "facing": 180, "fov": 60},
-    {"id": 2, "name": "CAM-02", "status": "active", "map_x": 50.0, "map_y": 15.0, "facing": 180, "fov": 60},
-    {"id": 3, "name": "CAM-03", "status": "active", "map_x": 80.0, "map_y": 15.0, "facing": 180, "fov": 60},
-    {"id": 4, "name": "CAM-04", "status": "active", "map_x": 20.0, "map_y": 40.0, "facing": 180, "fov": 60},
-    {"id": 5, "name": "CAM-05", "status": "active", "map_x": 50.0, "map_y": 40.0, "facing": 180, "fov": 60},
-    {"id": 6, "name": "CAM-06", "status": "active", "map_x": 80.0, "map_y": 40.0, "facing": 180, "fov": 60},
-    {"id": 7, "name": "CAM-07", "status": "active", "map_x": 50.0, "map_y": 72.0, "facing": 180, "fov": 90},
-    {"id": 8, "name": "CAM-08", "status": "active", "map_x": 20.0, "map_y": 105.0, "facing": 0, "fov": 70},
-    {"id": 9, "name": "CAM-09", "status": "active", "map_x": 50.0, "map_y": 105.0, "facing": 0, "fov": 70},
-    {"id": 10, "name": "CAM-10", "status": "active", "map_x": 80.0, "map_y": 105.0, "facing": 0, "fov": 70},
-    {"id": 11, "name": "CAM-11", "status": "active", "map_x": 12.0, "map_y": 135.0, "facing": 90, "fov": 80},
-    {"id": 12, "name": "CAM-12", "status": "active", "map_x": 88.0, "map_y": 135.0, "facing": 270, "fov": 80},
+    {"id": 1, "name": "CAM-01", "status": "active", "map_x": 4.0, "map_y": 6.0, "facing": 135, "fov": 70},
+    {"id": 2, "name": "CAM-02", "status": "active", "map_x": 96.0, "map_y": 6.0, "facing": 225, "fov": 70},
+    {"id": 3, "name": "CAM-03", "status": "active", "map_x": 97.0, "map_y": 52.0, "facing": 270, "fov": 75},
+    {"id": 4, "name": "CAM-04", "status": "active", "map_x": 3.0, "map_y": 52.0, "facing": 80, "fov": 75},
+    {"id": 5, "name": "CAM-05", "status": "active", "map_x": 50.0, "map_y": 92.0, "facing": 180, "fov": 85},
+    {"id": 6, "name": "CAM-06", "status": "active", "map_x": 4.0, "map_y": 132.0, "facing": 60, "fov": 75},
 ]
 
 
