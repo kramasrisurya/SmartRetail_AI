@@ -73,10 +73,9 @@ export function LoginModal({ isOpen, onClose, onOpenPrivacy, onOpenTerms }: Logi
   };
 
   const demoAccounts = [
-    { username: "admin", label: "Admin", desc: "Full org access" },
+    { username: "admin", label: "Admin", desc: "Full organization access" },
     { username: "op1", label: "Operator", desc: "Surveillance & alerts" },
     { username: "manager", label: "Manager", desc: "Store queue & analytics" },
-    { username: "viewer", label: "Viewer", desc: "Read-only view" },
   ];
 
   return (
@@ -169,7 +168,7 @@ export function LoginModal({ isOpen, onClose, onOpenPrivacy, onOpenTerms }: Logi
           <div className="text-[12px] font-semibold text-text-tertiary uppercase tracking-[0.04em]">
             Demo Roles (Instant Access)
           </div>
-          <div className="grid grid-cols-2 gap-2">
+          <div className="grid grid-cols-3 gap-2">
             {demoAccounts.map((acc) => (
               <button
                 key={acc.username}

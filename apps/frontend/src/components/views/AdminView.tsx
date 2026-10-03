@@ -15,7 +15,6 @@ const DEMO_USERS = [
   { id: 1, username: "admin", email: "admin@storesight.local", role: "Org Admin", active: true },
   { id: 2, username: "op1", email: "op1@storesight.local", role: "Security Operator", active: true },
   { id: 3, username: "manager", email: "manager@storesight.local", role: "Store Manager", active: true },
-  { id: 4, username: "viewer", email: "viewer@storesight.local", role: "View Only", active: true },
 ];
 
 export function AdminView({ cameras, zones, activeSubTab = "cameras" }: AdminViewProps) {
