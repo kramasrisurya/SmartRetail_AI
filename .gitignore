@@ -37,4 +37,5 @@ apps/frontend/node_modules/
 *.swp
 .DS_Store
 Thumbs.db
+*.zip
 

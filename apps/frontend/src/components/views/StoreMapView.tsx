@@ -467,9 +467,43 @@ export function StoreMapView({
                 </div>
               )}
 
-              {/* Camera Details */}
+              {/* Camera Details with Live CCTV Feed Preview */}
               {selectedCamera && (
                 <div className="space-y-3 text-[13px]">
+                  {/* Real Photographic Mini-Feed Preview */}
+                  <div className="relative rounded-[8px] overflow-hidden border border-border aspect-video bg-black shadow-xs">
+                    <img
+                      src={`/cameras/cam${Math.min(6, Math.max(1, selectedCamera.id))}.jpg`}
+                      alt={selectedCamera.name}
+                      className="w-full h-full object-cover"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-black/30 pointer-events-none" />
+
+                    {/* OpenCV Style OSD Tags */}
+                    <div className="absolute top-2 left-2 pointer-events-none">
+                      <span className="text-[#ff1a1a] font-mono font-bold text-[11px] tracking-wide drop-shadow-[0_1px_2px_rgba(0,0,0,0.9)]">
+                        Room Status: Occupied
+                      </span>
+                    </div>
+
+                    <div className="absolute top-2 right-2 pointer-events-none">
+                      <span className="inline-flex items-center gap-1 font-mono text-[10px] font-semibold text-red-400 bg-black/60 px-1.5 py-0.5 rounded border border-red-500/30">
+                        <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse" />
+                        LIVE
+                      </span>
+                    </div>
+
+                    {/* Simulated Detection Box on Thumbnail */}
+                    <div
+                      className="absolute border border-[#00ff00] bg-[#00ff00]/10 rounded-[1px] pointer-events-none"
+                      style={{ left: "42%", top: "34%", width: "16%", height: "48%" }}
+                    >
+                      <span className="absolute -top-3.5 left-0 bg-[#00ff00] text-black text-[8px] font-mono font-bold px-1 rounded-[1px]">
+                        Person
+                      </span>
+                    </div>
+                  </div>
+
                   <div className="grid grid-cols-2 gap-2.5">
                     <div className="p-3 rounded-[8px] bg-surface-elevated border border-border">
                       <span className="text-[11px] text-text-tertiary block font-medium">Stream Status</span>
