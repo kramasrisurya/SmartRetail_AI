@@ -153,6 +153,9 @@ export type ViewTab =
   | "overview"
   | "cameras"
   | "map"
+  | "spatial"
+  | "risk_pos"
+  | "event_graph"
   | "alerts"
   | "journeys"
   | "review_queue"
@@ -165,6 +168,23 @@ export type ViewTab =
   | "privacy"
   | "terms"
   | "not_found";
+
+export interface OverlayConfig {
+  personBoxes: boolean;
+  productBoxes: boolean;
+  cartBoxes: boolean;
+  vectorTrails: boolean;
+  interactionZones: boolean;
+  fpsHud: boolean;
+}
+
+export interface StreamHudStats {
+  fps: number;
+  droppedFrames: number;
+  latencyMs: number;
+  inferenceMs: number;
+  activeTrackCount: number;
+}
 
 export interface ToastNotification {
   id: string;
