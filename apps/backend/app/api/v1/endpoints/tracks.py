@@ -20,23 +20,21 @@ from app.api.v1.schemas.tracks import (
     ActiveTrack,
     TrackBatch,
     TrackBatchResult,
-    TrackCloseOp,
     TrackFrameRead,
-    TrackOpenOp,
     TrackRead,
-    TrackUpdateOp,
 )
 from app.db.session import get_db
 from app.models import Camera, Track, TrackFrame
+from app.services.ingest import UnknownCameraError, apply_track_ops, require_camera
 
 router = APIRouter()
 
 
 async def _require_camera(session: AsyncSession, camera_id: int) -> Camera:
-    camera = await session.get(Camera, camera_id)
-    if camera is None or camera.status.value == "removed":
-        raise HTTPException(status_code=404, detail=f"Camera {camera_id} does not exist")
-    return camera
+    try:
+        return await require_camera(session, camera_id)
+    except UnknownCameraError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
 
 
 @router.post("/tracks/batch", response_model=TrackBatchResult)
@@ -49,96 +47,13 @@ async def apply_track_batch(
     - ``open`` creates the track row (or refreshes an existing key).
     - ``update`` appends a sampled keyframe to an existing track.
     - ``close`` stamps ``ended_at`` and final confidence/summary.
+
+    The same logic backs the message-queue consumer (``app.services.ingest``).
     """
-    opened = closed = keyframes = unknown = 0
-    touched_keys: set[str] = set()
-    # Keyframe rows are materialized only after the flush below: an ``update``
-    # may reference a track opened earlier in the SAME batch, whose id does not
-    # exist until the INSERT has run.
-    pending_keyframes: list[tuple[Track, datetime, list[float], float]] = []
-
-    keys = {op.track_key for op in batch.ops}
-    existing = {
-        t.track_key: t
-        for t in (
-            await session.scalars(select(Track).where(Track.track_key.in_(keys)))
-        ).all()
-    }
-    camera_cache: dict[int, Camera] = {}
-
-    for op in batch.ops:
-        if isinstance(op, TrackOpenOp):
-            camera = camera_cache.get(op.camera_id)
-            if camera is None:
-                camera = await _require_camera(session, op.camera_id)
-                camera_cache[op.camera_id] = camera
-            track = existing.get(op.track_key)
-            if track is None:
-                track = Track(
-                    store_id=camera.store_id,
-                    camera_id=op.camera_id,
-                    started_at=op.ts,
-                    ended_at=None,
-                    confidence=op.confidence,
-                    track_key=op.track_key,
-                    bbox_summary={"first_bbox": op.bbox, "frames": 1},
-                )
-                session.add(track)
-                existing[op.track_key] = track
-                opened += 1
-            else:
-                # Redelivery of an already-opened key: keep the original start.
-                opened += 0
-            touched_keys.add(op.track_key)
-        elif isinstance(op, TrackUpdateOp):
-            track = existing.get(op.track_key)
-            if track is None:
-                unknown += 1
-                continue
-            summary = dict(track.bbox_summary or {})
-            history = list(summary.get("path") or [])
-            history.append({"t": op.ts.isoformat(), "bbox": op.bbox})
-            summary["path"] = history[-50:]  # bounded path preview
-            summary["last_bbox"] = op.bbox
-            summary["frames"] = int(summary.get("frames", 1)) + 1
-            track.bbox_summary = summary
-            track.confidence = op.confidence
-            keyframes += 1
-            pending_keyframes.append((track, op.ts, op.bbox, op.confidence))
-        elif isinstance(op, TrackCloseOp):
-            track = existing.get(op.track_key)
-            if track is None:
-                unknown += 1
-                continue
-            track.ended_at = op.ts
-            if op.confidence is not None:
-                track.confidence = op.confidence
-            summary = dict(track.bbox_summary or {})
-            if op.bbox is not None:
-                summary["last_bbox"] = op.bbox
-            track.bbox_summary = summary
-            closed += 1
-
-    await session.flush()  # assign ids to tracks opened in this batch
-    for track, ts, bbox, conf in pending_keyframes:
-        session.add(
-            TrackFrame(
-                store_id=track.store_id,
-                track_id=track.id,
-                frame_timestamp=ts,
-                bounding_box={"xyxy": bbox},
-                confidence=conf,
-            )
-        )
-
-    await session.commit()
-    return TrackBatchResult(
-        opened=opened,
-        updated_tracks=len(touched_keys),
-        closed=closed,
-        keyframes_written=keyframes,
-        unknown_keys=unknown,
-    )
+    try:
+        return await apply_track_ops(session, batch)
+    except UnknownCameraError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
 
 
 def _to_utc(dt: datetime | None) -> datetime | None:

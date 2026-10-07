@@ -8,49 +8,35 @@ then.
 
 from __future__ import annotations
 
+import logging
 from datetime import datetime
+from typing import Any
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.v1.schemas.events import EventBatch, EventBatchResult, EventRead
-from app.db.session import get_db
-from app.models import Camera, Event
+from app.db.session import get_db, is_db_temporarily_down, mark_db_failure, read_session
+from app.models import Event
+from app.services.ingest import UnknownCameraError, persist_event_batch
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
 
 @router.post("/events/batch", response_model=EventBatchResult)
-async def append_event_batch(
-    batch: EventBatch, session: AsyncSession = Depends(get_db)
-) -> EventBatchResult:
-    camera_cache: dict[int, Camera] = {}
-    created: list[Event] = []
-    for event in batch.events:
-        store_id = 0
-        if event.camera_id is not None:
-            camera = camera_cache.get(event.camera_id)
-            if camera is None:
-                camera = await session.get(Camera, event.camera_id)
-                if camera is None or camera.status.value == "removed":
-                    raise HTTPException(status_code=404, detail=f"Camera {event.camera_id} does not exist")
-                camera_cache[event.camera_id] = camera
-            store_id = camera.store_id
-        row = Event(
-            store_id=store_id,
-            event_type=event.event_type,
-            event_timestamp=event.ts,
-            camera_id=event.camera_id,
-            confidence=event.confidence,
-            payload=event.payload,
-        )
-        session.add(row)
-        created.append(row)
-    await session.flush()  # assign ids before commit so edges can reference them
-    ids = [row.id for row in created]
-    await session.commit()
-    return EventBatchResult(written=len(created), event_ids=ids)
+async def append_event_batch(batch: EventBatch, session: AsyncSession = Depends(get_db)) -> EventBatchResult:
+    """Direct REST ingestion (local development and legacy edge clients).
+
+    Production edge devices publish to the message queue instead; see
+    ``app.services.event_consumer``. Both paths share ``persist_event_batch``.
+    """
+    try:
+        return await persist_event_batch(session, batch)
+    except UnknownCameraError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
 
 
 @router.get("/events", response_model=list[EventRead])
@@ -61,11 +47,9 @@ async def query_events(
     end: datetime | None = Query(default=None),
     limit: int = Query(default=100, ge=1, le=1000),
 ) -> list[Any]:
-    from app.db.session import get_session_maker, is_db_temporarily_down, mark_db_failure
-
     if not is_db_temporarily_down():
         try:
-            async with get_session_maker()() as session:
+            async with read_session() as session:
                 stmt = select(Event)
                 if event_type:
                     stmt = stmt.where(Event.event_type == event_type)
@@ -79,10 +63,8 @@ async def query_events(
                     await session.scalars(stmt.order_by(Event.event_timestamp.desc(), Event.id.desc()).limit(limit))
                 ).all()
                 return list(rows)
-        except Exception as e:
-            import traceback
-            traceback.print_exc()
-            print("DB ERROR IN EVENTS:", e)
+        except Exception:
+            logger.exception("event query failed; serving empty result")
             mark_db_failure()
 
     return []

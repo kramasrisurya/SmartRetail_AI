@@ -6,7 +6,7 @@ from fastapi import APIRouter, Depends
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.db.session import get_db
+from app.db.session import get_read_db
 from app.models import Camera, Event
 
 router = APIRouter()
@@ -22,7 +22,7 @@ def _grid_coord(map_x: float | None, map_y: float | None, cell: int = 5) -> tupl
 @router.get("/analytics/heatmap")
 async def analytics_heatmap(
     limit: int = 50,
-    session: AsyncSession = Depends(get_db),
+    session: AsyncSession = Depends(get_read_db),
 ) -> dict:
     """Aggregate recent events by camera grid position into heatmap cells.
 

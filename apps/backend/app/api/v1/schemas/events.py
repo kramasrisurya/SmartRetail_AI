@@ -1,9 +1,9 @@
-"""Request/response schemas for the generic event log (Phase 7+)."""
+﻿"""Request/response schemas for the generic event log (Phase 7+)."""
 
 from __future__ import annotations
 
 from datetime import datetime
-from typing import Any
+from typing import Any, Literal
 
 from pydantic import BaseModel, Field
 
@@ -41,3 +41,25 @@ class EventRead(BaseModel):
     confidence: float | None
     payload: dict[str, Any]
     metadata_schema_version: int
+
+
+class EdgeEnvelope(BaseModel):
+    """Wire contract for one message on the edge-to-cloud topic.
+
+    The edge publishes lightweight JSON metadata only (never raw video). ``kind``
+    selects how ``payload`` is interpreted; ``payload`` is exactly the body the
+    equivalent REST batch endpoint accepts, so both paths validate identically:
+
+    * ``events``: an :class:`EventBatch` (``{"events": [...]}``)
+    * ``tracks``: a ``TrackBatch`` (``{"ops": [...]}``)
+
+    ``message_id`` is globally unique per publish and powers redelivery
+    de-duplication; ``edge_id`` identifies the producing device for tracing.
+    """
+
+    schema_version: Literal[1] = 1
+    kind: Literal["events", "tracks"]
+    message_id: str = Field(min_length=8, max_length=64)
+    edge_id: str = Field(min_length=1, max_length=128)
+    produced_at: datetime
+    payload: dict[str, Any]

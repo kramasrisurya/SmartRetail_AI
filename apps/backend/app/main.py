@@ -21,19 +21,30 @@ settings = get_settings()
 logger = logging.getLogger("uvicorn.error")
 
 _health_task: asyncio.Task | None = None
+_consumer_task: asyncio.Task | None = None
+_consumer = None
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     logger.info("Starting %s (%s)", settings.app_name, settings.app_env)
-    global _health_task
+    global _health_task, _consumer_task, _consumer
     if settings.camera_health_check_enabled:
         _health_task = asyncio.create_task(run_camera_health_loop())
+    if settings.broker_backend == "kafka":
+        from app.services.event_consumer import EdgeEventConsumer
+
+        _consumer = EdgeEventConsumer(settings)
+        _consumer_task = asyncio.create_task(_consumer.run(), name="edge-event-consumer")
+        app.state.event_consumer = _consumer
     yield
-    if _health_task is not None:
-        _health_task.cancel()
-        with suppress(asyncio.CancelledError):
-            await _health_task
+    if _consumer is not None:
+        _consumer.stop()
+    for task in (_consumer_task, _health_task):
+        if task is not None:
+            task.cancel()
+            with suppress(asyncio.CancelledError):
+                await task
     await close_redis()
     await close_database()
 

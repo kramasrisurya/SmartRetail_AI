@@ -1,0 +1,45 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: smartretail-worker
+  namespace: smartretail
+  labels:
+    app.kubernetes.io/name: smartretail-worker
+    app.kubernetes.io/component: queue-consumer
+spec:
+  replicas: 3
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: smartretail-worker
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: smartretail-worker
+        app.kubernetes.io/component: queue-consumer
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 10001
+        runAsGroup: 10001
+      containers:
+        - name: worker
+          image: ghcr.io/kramasrisurya/smartretail-ai-backend:latest
+          imagePullPolicy: IfNotPresent
+          command: ["python", "-m", "app.worker"]
+          envFrom:
+            - configMapRef:
+                name: smartretail-config
+            - secretRef:
+                name: smartretail-secrets
+          resources:
+            requests:
+              cpu: 200m
+              memory: 384Mi
+            limits:
+              cpu: 800m
+              memory: 768Mi

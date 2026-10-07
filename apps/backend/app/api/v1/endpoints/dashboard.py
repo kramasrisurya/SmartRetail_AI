@@ -21,7 +21,12 @@ from pydantic import BaseModel, Field
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.db.session import get_db, get_session_maker, is_db_temporarily_down, mark_db_failure
+from app.db.session import (
+    get_db,
+    is_db_temporarily_down,
+    mark_db_failure,
+    read_session,
+)
 from app.models import Alert, Camera, Event, RiskScore, Zone
 from services.security import (
     Authorizer,
@@ -135,7 +140,7 @@ async def dashboard_bootstrap() -> dict:
     """Everything the SPA needs on load: zones, cameras+health, counts."""
     if not is_db_temporarily_down():
         try:
-            async with get_session_maker()() as session:
+            async with read_session() as session:
                 zones = (await session.scalars(select(Zone))).all()
                 cams = (await session.scalars(select(Camera).order_by(Camera.name))).all()
                 if zones or cams:
@@ -179,7 +184,7 @@ async def dashboard_alerts(
     authorize(authorization, "view_incident_evidence")
     if not is_db_temporarily_down():
         try:
-            async with get_session_maker()() as session:
+            async with read_session() as session:
                 stmt = select(Alert).order_by(Alert.created_at.desc()).limit(100)
                 rows = (await session.scalars(stmt)).all()
                 if rows:

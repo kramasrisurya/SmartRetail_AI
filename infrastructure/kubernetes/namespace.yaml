@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: smartretail
+  labels:
+    app.kubernetes.io/name: smartretail-ai
+    app.kubernetes.io/part-of: smartretail-platform

@@ -1,0 +1,23 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: smartretail-config
+  namespace: smartretail
+data:
+  APP_ENV: "production"
+  LOG_LEVEL: "info"
+  API_V1_PREFIX: "/api/v1"
+  CORS_ORIGINS: "*"
+  POSTGRES_HOST: "postgres-primary.smartretail.svc.cluster.local"
+  POSTGRES_PORT: "5432"
+  POSTGRES_DB: "smartretail"
+  POSTGRES_REPLICA_HOST: "postgres-replica.smartretail.svc.cluster.local"
+  POSTGRES_REPLICA_PORT: "5432"
+  REDIS_HOST: "redis.smartretail.svc.cluster.local"
+  REDIS_PORT: "6379"
+  REDIS_MODE: "standalone"
+  BROKER_BACKEND: "kafka"
+  KAFKA_BOOTSTRAP_SERVERS: "kafka-service.smartretail.svc.cluster.local:9092"
+  KAFKA_EVENTS_TOPIC: "smartretail.edge.events"
+  KAFKA_DLQ_TOPIC: "smartretail.edge.events.dlq"
+  KAFKA_CONSUMER_GROUP: "smartretail-k8s-workers"
