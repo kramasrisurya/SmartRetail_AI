@@ -8,76 +8,81 @@ export default {
   theme: {
     extend: {
       colors: {
-        border: "hsl(var(--border))",
-        input: "hsl(var(--input))",
-        ring: "hsl(var(--ring))",
-        background: "hsl(var(--background))",
-        foreground: "hsl(var(--foreground))",
+        // Bespoke SmartRetail_AI Palette
+        carbon: {
+          DEFAULT: "#1B2021",
+          deep: "#15191A",
+          surface: "#222829",
+          card: "#232B2C",
+          border: "rgba(231, 231, 231, 0.08)",
+        },
+        alabaster: {
+          DEFAULT: "#E7E7E7",
+          muted: "rgba(231, 231, 231, 0.65)",
+          faint: "rgba(231, 231, 231, 0.4)",
+        },
+        teal: {
+          deep: "#517664",
+          light: "#628d78",
+          glow: "rgba(81, 118, 100, 0.2)",
+        },
+        lavender: {
+          vintage: "#816E94",
+          vivid: "#9D69A3",
+          glow: "rgba(157, 105, 163, 0.25)",
+        },
+        // Semantic Tokens
+        background: "#1B2021",
+        foreground: "#E7E7E7",
+        card: {
+          DEFAULT: "#222829",
+          foreground: "#E7E7E7",
+        },
         primary: {
-          DEFAULT: "hsl(var(--primary))",
-          hover: "hsl(var(--primary-hover))",
-          foreground: "hsl(var(--primary-foreground))",
+          DEFAULT: "#517664",
+          hover: "#5f8974",
+          foreground: "#E7E7E7",
         },
         secondary: {
-          DEFAULT: "hsl(var(--secondary))",
-          foreground: "hsl(var(--secondary-foreground))",
-        },
-        destructive: {
-          DEFAULT: "hsl(var(--destructive))",
-          foreground: "hsl(var(--destructive-foreground))",
-        },
-        muted: {
-          DEFAULT: "hsl(var(--muted))",
-          foreground: "hsl(var(--muted-foreground))",
-        },
-        accent: {
-          DEFAULT: "hsl(var(--accent))",
-          foreground: "hsl(var(--accent-foreground))",
-        },
-        popover: {
-          DEFAULT: "hsl(var(--popover))",
-          foreground: "hsl(var(--popover-foreground))",
-        },
-        card: {
-          DEFAULT: "hsl(var(--card))",
-          foreground: "hsl(var(--card-foreground))",
+          DEFAULT: "#816E94",
+          hover: "#927da7",
+          foreground: "#E7E7E7",
         },
         surface: {
-          DEFAULT: "hsl(var(--card))",
-          elevated: "hsl(var(--surface-elevated))",
+          DEFAULT: "#1B2021",
+          elevated: "#222829",
+          card: "#232B2C",
         },
-        text: {
-          primary: "hsl(var(--foreground))",
-          secondary: "hsl(var(--muted-foreground))",
-          tertiary: "hsl(var(--text-tertiary))",
+        accent: {
+          DEFAULT: "#816E94",
+          vivid: "#9D69A3",
+          foreground: "#E7E7E7",
         },
-        status: {
-          ok: "hsl(var(--success))",
-          warning: "hsl(var(--warning))",
-          critical: "hsl(var(--destructive))",
-          info: "hsl(var(--info))",
-        }
+        alert: {
+          DEFAULT: "#9D69A3",
+          hover: "#ad75b3",
+          foreground: "#E7E7E7",
+        },
+        "text-main": "#E7E7E7",
+        "text-muted": "rgba(231, 231, 231, 0.65)",
+        "text-dim": "rgba(231, 231, 231, 0.4)",
+        border: "rgba(231, 231, 231, 0.1)",
+      },
+      fontFamily: {
+        sans: ["Plus Jakarta Sans", "Inter", "-apple-system", "BlinkMacSystemFont", "Segoe UI", "sans-serif"],
+        mono: ["JetBrains Mono", "Fira Code", "SFMono-Regular", "Menlo", "Consolas", "monospace"],
       },
       borderRadius: {
-        DEFAULT: "10px",
+        xl: "12px",
         lg: "10px",
         md: "8px",
         sm: "6px",
-        card: "10px",
-        button: "8px",
-        badge: "6px",
-        input: "8px",
       },
       boxShadow: {
-        xs: "0 1px 2px rgba(0, 0, 0, 0.04)",
-        card: "0 1px 2px rgba(0, 0, 0, 0.04)",
-        "card-hover": "0 4px 12px rgba(0, 0, 0, 0.08)",
-        popover: "0 8px 24px rgba(0, 0, 0, 0.12)",
-        modal: "0 16px 36px rgba(0, 0, 0, 0.16)",
-      },
-      fontFamily: {
-        sans: ["Inter", "-apple-system", "BlinkMacSystemFont", "Segoe UI", "Roboto", "sans-serif"],
-        mono: ["JetBrains Mono", "SFMono-Regular", "Menlo", "Monaco", "Consolas", "monospace"],
+        glowTeal: "0 0 20px -3px rgba(81, 118, 100, 0.25)",
+        glowLavender: "0 0 20px -3px rgba(129, 110, 148, 0.25)",
+        glowAlert: "0 0 24px -2px rgba(157, 105, 163, 0.35)",
+        card: "0 4px 20px -2px rgba(0, 0, 0, 0.4)",
       },
     },
   },

@@ -10,6 +10,7 @@ import {
 } from "./hooks/useDashboardQueries";
 import { Sidebar } from "./components/layout/Sidebar";
 import { Header } from "./components/layout/Header";
+import { DashboardLayout } from "./components/layout/DashboardLayout";
 import { CommandPalette } from "./components/layout/CommandPalette";
 import { LoginModal } from "./components/views/LoginModal";
 import { CookieConsentBanner } from "./components/common/CookieConsentBanner";
@@ -20,6 +21,18 @@ import { Alert, Camera, ViewTab } from "./types";
 import { analytics } from "./lib/analytics";
 
 // Lazy-loaded Views for optimum code-splitting & reduced initial JS bundle
+const KPIHud = lazy(() =>
+  import("./components/views/KPIHud").then((m) => ({ default: m.KPIHud }))
+);
+const CameraMatrix = lazy(() =>
+  import("./components/cameras/CameraMatrix").then((m) => ({ default: m.CameraMatrix }))
+);
+const SpatialTwinView = lazy(() =>
+  import("./components/views/SpatialTwinView").then((m) => ({ default: m.SpatialTwinView }))
+);
+const RiskPosView = lazy(() =>
+  import("./components/views/RiskPosView").then((m) => ({ default: m.RiskPosView }))
+);
 const OverviewView = lazy(() =>
   import("./components/views/OverviewView").then((m) => ({ default: m.OverviewView }))
 );
@@ -147,73 +160,25 @@ export function App() {
   }
 
   return (
-    <div className="flex h-screen w-screen overflow-hidden bg-background text-foreground font-sans text-[14px]">
-      {/* Toast Notification Stack */}
-      <ToastContainer />
+    <DashboardLayout
+      currentTab={currentTab}
+      onNavigate={handleNavigate}
+      openAlertsCount={openAlertsCount}
+    >
+      <ErrorBoundary
+        key={currentTab}
+        fallbackTitle={`Failed to load ${currentTab} view`}
+        fallbackMessage="An error occurred while loading this view. You can retry or navigate to another view."
+        onReset={() => refetchAlerts()}
+      >
+        <Suspense fallback={<ViewSkeleton />}>
+          {currentTab === "overview" && <KPIHud />}
 
-      {/* Global Command Palette */}
-      <CommandPalette
-        isOpen={commandPaletteOpen}
-        onClose={() => appStore.setCommandPaletteOpen(false)}
-        onSelectTab={handleNavigate}
-      />
+          {currentTab === "cameras" && <CameraMatrix cameras={cameras} />}
 
-      {/* Responsive Collapsible Sidebar */}
-      <Sidebar
-        currentTab={currentTab}
-        onTabChange={handleNavigate}
-        openAlertsCount={openAlertsCount}
-        mobileOpen={mobileMenuOpen}
-        onCloseMobile={() => appStore.setMobileMenuOpen(false)}
-      />
+          {(currentTab === "map" || currentTab === "spatial") && <SpatialTwinView />}
 
-      {/* Main Content Area */}
-      <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
-        <Header
-          onOpenCommand={() => appStore.setCommandPaletteOpen(true)}
-          unreadCount={openAlertsCount}
-          onOpenNotifications={() => handleNavigate("alerts")}
-          onToggleMobileMenu={() => appStore.setMobileMenuOpen(!mobileMenuOpen)}
-        />
-
-        <main className="flex-1 overflow-y-auto p-4 sm:p-6 bg-background">
-          <ErrorBoundary
-            key={currentTab}
-            fallbackTitle={`Failed to load ${currentTab} view`}
-            fallbackMessage="An error occurred while loading this view. You can retry or navigate to another view."
-            onReset={() => refetchAlerts()}
-          >
-            <Suspense fallback={<ViewSkeleton />}>
-              {currentTab === "overview" && (
-                <OverviewView
-                  cameras={cameras}
-                  alerts={alerts}
-                  zones={zones}
-                  onNavigate={handleNavigate}
-                  onSelectAlert={handleSelectAlert}
-                  onSelectCamera={handleSelectCamera}
-                />
-              )}
-
-              {currentTab === "cameras" && (
-                <CamerasView
-                  cameras={cameras}
-                  alerts={alerts}
-                  zones={zones}
-                  onSelectAlert={handleSelectAlert}
-                />
-              )}
-
-              {currentTab === "map" && (
-                <StoreMapView
-                  zones={zones}
-                  cameras={cameras}
-                  heatmapCells={heatmapCells}
-                  events={events}
-                  selectedCamera={selectedCamera}
-                  onSelectCamera={handleSelectCamera}
-                />
-              )}
+          {currentTab === "risk_pos" && <RiskPosView />}
 
               {(currentTab === "alerts" || currentTab === "review_queue") && (
                 <AlertsView
@@ -266,9 +231,7 @@ export function App() {
               )}
             </Suspense>
           </ErrorBoundary>
-        </main>
-      </div>
-    </div>
+    </DashboardLayout>
   );
 }
 
