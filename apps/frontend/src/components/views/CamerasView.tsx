@@ -26,7 +26,6 @@ import {
 import { Camera, Alert, Zone } from "../../types";
 import { cn, getStatusDot } from "../../lib/utils";
 import { useAppStore } from "../../store/useAppStore";
-import { MultiCameraMatrix } from "../cameras/MultiCameraMatrix";
 
 interface CamerasViewProps {
   cameras: Camera[];
@@ -226,7 +225,6 @@ export function CamerasView({ cameras, alerts = [] }: CamerasViewProps) {
   const [osdStyle, setOsdStyle] = useState<"opencv" | "modern">("opencv");
   const [zoomLevel, setZoomLevel] = useState<number>(1);
   const [imageErrors, setImageErrors] = useState<Record<number, boolean>>({});
-  const [streamEngine, setStreamEngine] = useState<"cctv" | "canvas">("canvas");
 
   // Reset focus when store changes to avoid showing stale camera
   useEffect(() => {
@@ -349,34 +347,6 @@ export function CamerasView({ cameras, alerts = [] }: CamerasViewProps) {
 
         {/* Global Controls & Layout Switcher */}
         <div className="flex flex-wrap items-center gap-2.5 text-[13px]">
-          {/* Stream Engine Switcher */}
-          <div className="inline-flex rounded-[8px] border border-border p-0.5 bg-surface-elevated shadow-xs">
-            <button
-              type="button"
-              onClick={() => setStreamEngine("canvas")}
-              className={cn(
-                "px-2.5 py-1 rounded-[6px] text-[12px] font-mono transition",
-                streamEngine === "canvas"
-                  ? "bg-cyan-500 text-black font-bold shadow-xs"
-                  : "text-text-tertiary hover:text-foreground"
-              )}
-            >
-              CANVAS rAF
-            </button>
-            <button
-              type="button"
-              onClick={() => setStreamEngine("cctv")}
-              className={cn(
-                "px-2.5 py-1 rounded-[6px] text-[12px] font-mono transition",
-                streamEngine === "cctv"
-                  ? "bg-card text-foreground font-bold shadow-xs"
-                  : "text-text-tertiary hover:text-foreground"
-              )}
-            >
-              CCTV OSD
-            </button>
-          </div>
-
           {focusCamera && (
             <button
               type="button"
@@ -478,12 +448,9 @@ export function CamerasView({ cameras, alerts = [] }: CamerasViewProps) {
         </div>
       </div>
 
-      {streamEngine === "canvas" ? (
-        <MultiCameraMatrix cameras={cameras} />
-      ) : (
-        /* Main CCTV Grid Feeds */
-        <div
-          className={cn(
+      {/* Main CCTV Grid Feeds */}
+      <div
+        className={cn(
           "grid gap-5",
           focusCamera
             ? "grid-cols-1"
@@ -761,7 +728,6 @@ export function CamerasView({ cameras, alerts = [] }: CamerasViewProps) {
           );
         })}
       </div>
-      )}
     </div>
   );
 }

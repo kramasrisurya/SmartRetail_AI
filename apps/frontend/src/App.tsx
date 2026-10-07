@@ -8,7 +8,6 @@ import {
   useHeatmapQuery,
   useAlertActionMutation,
 } from "./hooks/useDashboardQueries";
-import { DashboardLayout } from "./components/layout/DashboardLayout";
 import { Sidebar } from "./components/layout/Sidebar";
 import { Header } from "./components/layout/Header";
 import { CommandPalette } from "./components/layout/CommandPalette";
@@ -53,12 +52,6 @@ const PrivacyPolicyView = lazy(() =>
 );
 const TermsView = lazy(() =>
   import("./components/views/TermsView").then((m) => ({ default: m.TermsView }))
-);
-const RiskPosView = lazy(() =>
-  import("./components/views/RiskPosView").then((m) => ({ default: m.RiskPosView }))
-);
-const EventGraphView = lazy(() =>
-  import("./components/views/EventGraphView").then((m) => ({ default: m.EventGraphView }))
 );
 const NotFoundView = lazy(() =>
   import("./components/views/NotFoundView").then((m) => ({ default: m.NotFoundView }))
@@ -154,17 +147,37 @@ export function App() {
   }
 
   return (
-    <DashboardLayout
-      currentTab={currentTab}
-      onNavigate={handleNavigate}
-      openAlertsCount={openAlertsCount}
-      mobileMenuOpen={mobileMenuOpen}
-      onToggleMobileMenu={() => appStore.setMobileMenuOpen(!mobileMenuOpen)}
-      onCloseMobileMenu={() => appStore.setMobileMenuOpen(false)}
-      commandPaletteOpen={commandPaletteOpen}
-      onSetCommandPaletteOpen={(open) => appStore.setCommandPaletteOpen(open)}
-    >
-      <ErrorBoundary
+    <div className="flex h-screen w-screen overflow-hidden bg-background text-foreground font-sans text-[14px]">
+      {/* Toast Notification Stack */}
+      <ToastContainer />
+
+      {/* Global Command Palette */}
+      <CommandPalette
+        isOpen={commandPaletteOpen}
+        onClose={() => appStore.setCommandPaletteOpen(false)}
+        onSelectTab={handleNavigate}
+      />
+
+      {/* Responsive Collapsible Sidebar */}
+      <Sidebar
+        currentTab={currentTab}
+        onTabChange={handleNavigate}
+        openAlertsCount={openAlertsCount}
+        mobileOpen={mobileMenuOpen}
+        onCloseMobile={() => appStore.setMobileMenuOpen(false)}
+      />
+
+      {/* Main Content Area */}
+      <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
+        <Header
+          onOpenCommand={() => appStore.setCommandPaletteOpen(true)}
+          unreadCount={openAlertsCount}
+          onOpenNotifications={() => handleNavigate("alerts")}
+          onToggleMobileMenu={() => appStore.setMobileMenuOpen(!mobileMenuOpen)}
+        />
+
+        <main className="flex-1 overflow-y-auto p-4 sm:p-6 bg-background">
+          <ErrorBoundary
             key={currentTab}
             fallbackTitle={`Failed to load ${currentTab} view`}
             fallbackMessage="An error occurred while loading this view. You can retry or navigate to another view."
@@ -191,7 +204,7 @@ export function App() {
                 />
               )}
 
-              {(currentTab === "map" || currentTab === "spatial") && (
+              {currentTab === "map" && (
                 <StoreMapView
                   zones={zones}
                   cameras={cameras}
@@ -201,10 +214,6 @@ export function App() {
                   onSelectCamera={handleSelectCamera}
                 />
               )}
-
-              {currentTab === "risk_pos" && <RiskPosView />}
-
-              {currentTab === "event_graph" && <EventGraphView />}
 
               {(currentTab === "alerts" || currentTab === "review_queue") && (
                 <AlertsView
@@ -257,7 +266,9 @@ export function App() {
               )}
             </Suspense>
           </ErrorBoundary>
-    </DashboardLayout>
+        </main>
+      </div>
+    </div>
   );
 }
 

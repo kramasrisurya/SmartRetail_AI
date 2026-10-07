@@ -41,7 +41,7 @@ export function Sidebar({
         items: [
           { id: "overview" as ViewTab, label: "Overview", icon: LayoutDashboard },
           { id: "cameras" as ViewTab, label: "Live Cameras", icon: Video },
-          { id: "map" as ViewTab, label: "Digital Twin Map", icon: MapPin },
+          { id: "map" as ViewTab, label: "Store Map", icon: MapPin },
         ],
       },
       {
@@ -53,8 +53,6 @@ export function Sidebar({
             icon: Bell,
             count: openAlertsCount > 0 ? openAlertsCount : undefined,
           },
-          { id: "risk_pos" as ViewTab, label: "POS Risk Console", icon: ShieldAlert },
-          { id: "event_graph" as ViewTab, label: "Event Graph", icon: GitBranch },
           { id: "journeys" as ViewTab, label: "Customer Journeys", icon: GitBranch },
           { id: "review_queue" as ViewTab, label: "Review Queue", icon: CheckSquare },
           { id: "assistant" as ViewTab, label: "AI Assistant", icon: Bot },
