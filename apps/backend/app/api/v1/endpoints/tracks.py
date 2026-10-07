@@ -16,6 +16,8 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+import logging
+
 from app.api.v1.schemas.tracks import (
     ActiveTrack,
     TrackBatch,
@@ -23,9 +25,12 @@ from app.api.v1.schemas.tracks import (
     TrackFrameRead,
     TrackRead,
 )
+from app.core.redis import get_active_tracks
 from app.db.session import get_db
 from app.models import Camera, Track, TrackFrame
 from app.services.ingest import UnknownCameraError, apply_track_ops, require_camera
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
@@ -71,6 +76,35 @@ async def list_active_tracks(
 ) -> list[ActiveTrack]:
     """Tracks currently live on a camera (no ``ended_at``), newest first."""
     await _require_camera(session, camera_id)
+    now = datetime.now(UTC)
+    try:
+        cached = await get_active_tracks(camera_id, limit=200)
+        if cached:
+            out: list[ActiveTrack] = []
+            for item in cached:
+                raw_started = item.get("started_at")
+                if isinstance(raw_started, str):
+                    started_at = datetime.fromisoformat(raw_started)
+                elif isinstance(raw_started, datetime):
+                    started_at = raw_started
+                else:
+                    started_at = now
+                started_dt = _to_utc(started_at) or now
+                duration = (now - started_dt).total_seconds()
+                out.append(
+                    ActiveTrack(
+                        id=int(item.get("id") or 0),
+                        track_key=str(item.get("track_key", "")),
+                        started_at=started_at,
+                        duration_s=round(max(0.0, duration), 3),
+                        confidence=item.get("confidence"),
+                        last_bbox=item.get("last_bbox"),
+                    )
+                )
+            return out
+    except Exception:
+        logger.warning("redis active track query failed; falling back to DB", exc_info=True)
+
     rows = (
         await session.scalars(
             select(Track)
@@ -79,15 +113,14 @@ async def list_active_tracks(
             .limit(200)
         )
     ).all()
-    out: list[ActiveTrack] = []
-    now = datetime.now(UTC)
+    out_db: list[ActiveTrack] = []
     for t in rows:
         summary = t.bbox_summary or {}
         last = summary.get("last_bbox") or summary.get("first_bbox")
         end_dt = _to_utc(t.ended_at) or now
         start_dt = _to_utc(t.started_at) or now
         duration = end_dt - start_dt
-        out.append(
+        out_db.append(
             ActiveTrack(
                 id=t.id,
                 track_key=t.track_key,
@@ -97,7 +130,7 @@ async def list_active_tracks(
                 last_bbox=[float(v) for v in last] if last else None,
             )
         )
-    return out
+    return out_db
 
 
 @router.get("/tracks/{track_id}", response_model=TrackRead)

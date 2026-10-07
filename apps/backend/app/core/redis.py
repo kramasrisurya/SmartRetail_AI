@@ -15,6 +15,7 @@ mode, so callers do not branch on topology.
 
 from __future__ import annotations
 
+import json
 import logging
 from typing import Any
 
@@ -157,3 +158,66 @@ async def mark_seen(key: str, ttl_seconds: int) -> None:
     caller can degrade: the consumer processes anyway.
     """
     await get_redis().set(key, "1", ex=ttl_seconds)
+
+
+def active_camera_tracks_set_key(camera_id: int) -> str:
+    """Key for set of active track_keys on camera_id, pinned to hash tag {camera_id}."""
+    return f"tracks:{{{camera_id}}}:active"
+
+
+def active_track_data_key(camera_id: int, track_key: str) -> str:
+    """Key for serialized track metadata, co-located in hash tag {camera_id}."""
+    return f"tracks:{{{camera_id}}}:{track_key}"
+
+
+async def upsert_active_track(
+    camera_id: int,
+    track_key: str,
+    data: dict[str, Any],
+    ttl_seconds: int = 120,
+) -> None:
+    """Buffer live edge track in Redis with TTL expiration."""
+    client = get_redis()
+    skey = active_camera_tracks_set_key(camera_id)
+    dkey = active_track_data_key(camera_id, track_key)
+    async with client.pipeline(transaction=True) as pipe:
+        pipe.set(dkey, json.dumps(data), ex=ttl_seconds)
+        pipe.sadd(skey, track_key)
+        pipe.expire(skey, ttl_seconds * 2)
+        await pipe.execute()
+
+
+async def remove_active_track(camera_id: int, track_key: str) -> None:
+    """Evict closed track from active set."""
+    client = get_redis()
+    skey = active_camera_tracks_set_key(camera_id)
+    dkey = active_track_data_key(camera_id, track_key)
+    async with client.pipeline(transaction=True) as pipe:
+        pipe.srem(skey, track_key)
+        pipe.delete(dkey)
+        await pipe.execute()
+
+
+async def get_active_tracks(camera_id: int, limit: int = 200) -> list[dict[str, Any]]:
+    """Retrieve active tracks for camera_id directly from Redis."""
+    client = get_redis()
+    skey = active_camera_tracks_set_key(camera_id)
+    track_keys = list(await client.smembers(skey))[:limit]
+    if not track_keys:
+        return []
+    dkeys = [active_track_data_key(camera_id, tk) for tk in track_keys]
+    values = await client.mget(dkeys)
+    out: list[dict[str, Any]] = []
+    expired: list[str] = []
+    for tk, val in zip(track_keys, values, strict=False):
+        if val is not None:
+            try:
+                out.append(json.loads(val))
+            except Exception:
+                expired.append(tk)
+        else:
+            expired.append(tk)
+    if expired:
+        await client.srem(skey, *expired)
+    return out
+

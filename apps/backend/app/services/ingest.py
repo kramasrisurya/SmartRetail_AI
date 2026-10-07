@@ -11,6 +11,7 @@ to the caller.
 
 from __future__ import annotations
 
+import logging
 from datetime import datetime
 
 from sqlalchemy import select
@@ -24,7 +25,10 @@ from app.api.v1.schemas.tracks import (
     TrackOpenOp,
     TrackUpdateOp,
 )
+from app.core.redis import remove_active_track, upsert_active_track
 from app.models import Camera, Event, Track, TrackFrame
+
+logger = logging.getLogger(__name__)
 
 
 class UnknownCameraError(LookupError):
@@ -158,6 +162,33 @@ async def apply_track_ops(session: AsyncSession, batch: TrackBatch) -> TrackBatc
         )
 
     await session.commit()
+
+    # Synchronize short-lived active track states to Redis (best effort)
+    try:
+        for op in batch.ops:
+            if isinstance(op, (TrackOpenOp, TrackUpdateOp)):
+                t = existing.get(op.track_key)
+                if t and t.ended_at is None:
+                    summary = t.bbox_summary or {}
+                    last = summary.get("last_bbox") or summary.get("first_bbox")
+                    await upsert_active_track(
+                        camera_id=t.camera_id,
+                        track_key=t.track_key,
+                        data={
+                            "id": t.id,
+                            "track_key": t.track_key,
+                            "started_at": t.started_at.isoformat() if t.started_at else None,
+                            "confidence": t.confidence,
+                            "last_bbox": [float(v) for v in last] if last else None,
+                        },
+                    )
+            elif isinstance(op, TrackCloseOp):
+                t = existing.get(op.track_key)
+                if t:
+                    await remove_active_track(camera_id=t.camera_id, track_key=op.track_key)
+    except Exception:
+        logger.warning("redis active track sync failed (non-fatal)", exc_info=True)
+
     return TrackBatchResult(
         opened=opened,
         updated_tracks=len(touched_keys),
