@@ -93,12 +93,24 @@ export default async function handler(req: any, res: any) {
   // 1. Auth: /auth/login
   if (route === "auth/login" && req.method === "POST") {
     const { username = "manager" } = req.body || {};
+    const DEMO_ROLES: Record<string, string> = {
+      admin: "org_admin",
+      op1: "security_operator",
+      operator: "security_operator",
+      manager: "store_manager",
+      viewer: "view_only"
+    };
+    const role = DEMO_ROLES[username.toLowerCase()] || "store_manager";
+    const token = "mock-storesight-jwt-token-99882233";
     return res.status(200).json({
-      token: "mock-storesight-jwt-token-99882233",
+      access_token: token,
+      refresh_token: token,
+      role,
+      token,
       user: {
         id: 1,
         username,
-        role: "admin",
+        role,
         storeId: "store-flagship-01",
         storeName: "Aegis Flagship Store 01"
       }
